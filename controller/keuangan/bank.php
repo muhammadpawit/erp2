@@ -1,0 +1,1886 @@
+<?php
+class ControllerKeuanganBank extends Controller {
+	private $error = array();
+	// baru 20 Januari 2020 - Function mutasi
+	public function mutasi() {
+
+		$this->document->setTitle('Mutasi Bank');
+
+		$url = '';
+		
+		if (isset($this->request->get['sorttransaksi'])) {
+			$url .= '&sorttransaksi=' . $this->request->get['sorttransaksi'];
+		}
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . $this->request->get['filter_name'];
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+		$this->data['url'] = $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url, 'SSL');
+
+		if (isset($this->request->get['pagekartu'])) {
+			$url .= '&pagekartu=' . $this->request->get['pagekartu'];
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+		}
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+		}
+
+		if (isset($this->request->get['bank_id'])) {
+			$bank_id = $this->request->get['bank_id'];
+		} else {
+			$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+		}
+
+		if (isset($this->request->get['pagekartu'])) {
+			$pagekartu = $this->request->get['pagekartu'];
+		} else {
+			$pagekartu = 1;
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$filter_tgl_awal = $this->request->get['filter_tgl_awal'];
+		} else {
+			$filter_tgl_awal = '';
+		}
+
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$filter_tgl_akhir = $this->request->get['filter_tgl_akhir'];
+		} else {
+			$filter_tgl_akhir = '';
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$filter_jenis = $this->request->get['filter_jenis'];
+		} else {
+			$filter_jenis = '';
+		}
+		
+		if (isset($this->request->get['filter_saldo'])) {
+			$filter_saldo = $this->request->get['filter_saldo'];
+		} else {
+			$filter_saldo =null;
+		}
+		if (isset($this->request->get['filter_ref'])) {
+			$filter_ref = $this->request->get['filter_ref'];
+		} else {
+			$filter_ref =null;
+		}
+		if (isset($this->request->get['filter_keterangan'])) {
+			$filter_keterangan = $this->request->get['filter_keterangan'];
+		} else {
+			$filter_keterangan =null;
+		}
+
+		if (isset($this->request->get['sorttransaksi'])) {
+			$sorttransaksi = $this->request->get['sorttransaksi'];
+		} else {
+			$sorttransaksi =null;
+		}
+
+		if (isset($this->session->data['success'])) {
+			$this->data['success'] = $this->session->data['success'];
+
+			unset($this->session->data['success']);
+		} else {
+			$this->data['success'] = '';
+		}
+		$this->load->model('keuangan/bank');
+		$data = array(
+			'sorttransaksi' => $sorttransaksi,
+      		'filter_tgl_awal'  => $filter_tgl_awal,
+			'filter_tgl_akhir'	=> $filter_tgl_akhir,
+			'bank_id'	=> $bank_id,
+			'filter_jenis'	=> $filter_jenis,
+			'filter_saldo'	=> $filter_saldo,
+			'filter_ref'	=> $filter_ref,
+			'filter_keterangan'	=> $filter_keterangan,
+			//'start'                  => ($pagekartu - 1) * $this->config->get('config_admin_limit'),
+			//'limit'                  => $this->config->get('config_admin_limit')
+		);
+		$results=$this->model_keuangan_bank->laporanmutasibank($bank_id,$data);
+		$order_total=$this->model_keuangan_bank->totallaporanmutasibank($bank_id,$data);;
+		$this->data['totalsaldo']=0;
+		$this->data['saldoawal']=$this->model_keuangan_bank->saldoawalnew($bank_id);
+		$this->data['bank']=$this->model_keuangan_bank->getBank(array(),array(),array('id'  => $bank_id));
+		$this->data['cancel'] = $this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		$this->data['exportexcel'] = $this->url->link('keuangan/bank/exportexcel', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		$tot = $this->model_keuangan_bank->totalan($data);
+		$this->data['totalsaldomasuk'] = $tot['saldomasuk'];
+		$this->data['totalsaldokeluar'] = $tot['saldokeluar'];
+		if($this->user->getUsername()=="pawits"){
+			echo "<pre>";print_r($this->data['saldoawal']);exit;
+		}
+		$this->load->model('user/user');
+		$custdata=$this->model_user_user->getAksesData($this->user->getId(),7);
+		$this->data['kartustoks']=array();
+		$i=0;
+		$totalmasuk=0;
+		$totalkeluar=0;
+		$sisa=0;
+		$a=0;
+		$sblm=0;
+		//$results = array_reverse($results);
+		if($this->user->getUsername()=="pawits"){
+			echo "<pre>";print_r($results);exit;
+		}
+
+		$this->load->model('keuangan/jurnal');
+
+		foreach (array_reverse($results) as $result) {
+			$action=array();
+			$urlref=$this->url->link($result['urlref'].'/tampil', 'token=' . $this->session->data['token'] . '&id=' . $result['idref'], 'SSL');
+				if($result['urlref'] == 'pembelian/tagihanbiayaimport' | $result['urlref'] == 'pembelian/tagihanbiayalokal'){
+					$urlref=$this->url->link($result['urlref'], 'token=' . $this->session->data['token'] . '&filter_no_faktur=' . $result['idref'], 'SSL');
+				}
+
+				
+				if($custdata){
+					/**/
+					if(empty($result['jurnal_id'])){
+						$action[] = array(
+							'text' => 'Edit Mutasi',
+							'href' => $this->url->link('keuangan/bank/editmutasi', 'token=' . $this->session->data['token'] . '&bank_id='.$bank_id.'&id=' . $result['id'].$url, 'SSL')
+						);
+						$action[] = array(
+							'text' => 'Hapus Mutasi',
+							'href' => $this->url->link('keuangan/bank/hapusmutasi', 'token=' . $this->session->data['token'] . '&bank_id='.$bank_id.'&id=' . $result['id'].$url, 'SSL')
+						);
+					}
+					
+					
+				}
+				if($result['jurnal_id'] > 0){
+					$action[] = array(
+						'text' => 'Lihat Jurnal',
+						'href' => $this->url->link('laporan/jurnalumum', 'token=' . $this->session->data['token'] . '&filter_nodokumen=' . $result['no_dokumen'].$url, 'SSL')
+					);
+				}
+				if($result['idref'] > 0){
+					$action[] = array(
+						'text' => 'Lihat Referensi',
+						'href' => $urlref
+					);
+				}
+				/*if($result['type'] == 31){
+					$action[] = array(
+						'text' => 'Lihat Jurnal',
+						'href' => $this->url->link('laporan/jurnalumum', 'token=' . $this->session->data['token'] . '&filter_nodokumen=' . $result['no_dokumen'].$url, 'SSL')
+					);
+				}*/
+			
+				$akunlawan='';
+			if(!empty($result['jurnal_id'])){
+				$ju=$this->model_keuangan_jurnal->getDetailJurnalUmums($result['jurnal_id'],array());
+				//print_r($ju);
+				foreach($ju as $jurnal){
+					//if($jurnal['ref_akun'] != $result['kode_rek']){
+						if($result['saldomasuk'] > 0){
+							//tampil akun kredit
+							if($jurnal['kredit'] > 0){
+								$akunlawan .=$jurnal['ref_akun'].' '.$jurnal['keterangan'].'<br>';
+							}
+						}
+						if($result['saldokeluar'] > 0){
+							//tampil akun debet
+							if($jurnal['debet'] > 0){
+								$akunlawan .=$jurnal['ref_akun'].' '.$jurnal['keterangan'].'<br>';
+							}
+						}
+					//}
+				}
+			}
+			
+			/**/
+			if($a==0){
+				$sisa += ($result['saldomasuk'] - $result['saldokeluar']);
+			}else{
+				$sisa += ($result['saldomasuk'] - $result['saldokeluar']);
+			}
+			if($filter_tgl_awal==''){
+				if($result['tanggal_transaksi'] < date('Y-m-d',strtotime('first day of this month'))){
+					$sblm = $sisa;
+				}
+				
+				if(date('Y-m-d',strtotime($result['tanggal_transaksi'])) >= date('Y-m-d',strtotime('first day of this month')) && $result['tanggal_transaksi'] <= date('Y-m-d',strtotime('last day of this month'))){
+					$totalmasuk += $result['saldomasuk'];
+					$totalkeluar += $result['saldokeluar'];
+					$this->data['kartustoks'][] = array(
+						'id'	=> $result['id'],
+						'date_trans'=> date('d F Y',strtotime($result['tanggal_transaksi'])),
+						'date_added'=> date('d F Y',strtotime($result['tanggal_input'])),
+						'waktu'	=> date('H:i:s',strtotime($result['tanggal_transaksi'])),
+						'saldo_masuk'   => $this->currency->format($result['saldomasuk']),
+						'saldo_keluar'   => $this->currency->format($result['saldokeluar']),
+						'saldo_akhir'   => $this->currency->format($result['saldomasuk'] - $result['saldokeluar']),
+						//'saldoakhirtable'   => $this->currency->format($result['saldoakhir']),
+						'masuk'   => $result['saldomasuk'],
+						'keluar'   => $result['saldokeluar'],
+						'ket'	=> $result['keterangan'],
+						'linkterkait'	=> !empty($result['no_dokumen'])?$result['no_dokumen']:$result['linkterkait'],
+						'urlref'	=> $urlref,
+						'type'	=> $result['type'],
+						'sisa' => $this->currency->format($sisa),
+						'invoice'	=> $result['referensi'],
+						'action'      => $action,
+						'akunlawan'	=> $akunlawan,
+					);
+					/*$this->data['kartustoks'][] = array(
+						'id'	=> $result['id'],
+						'date_trans'=> date('d F Y',strtotime($result['tanggal_transaksi'])),
+						'date_added'=> date('d F Y',strtotime($result['tanggal_input'])),
+						'waktu'	=> date('H:i:s',strtotime($result['tanggal_transaksi'])),
+						'saldo_masuk'   => $this->currency->format($result['saldomasuk']),
+						'saldo_keluar'   => $this->currency->format($result['saldokeluar']),
+						'saldo_akhir'   => $this->currency->format($result['saldomasuk'] - $result['saldokeluar']),
+						//'saldoakhirtable'   => $this->currency->format($result['saldoakhir']),
+						'masuk'   => $result['saldomasuk'],
+						'keluar'   => $result['saldokeluar'],
+						'ket'	=> $result['keterangan'],
+						'sisa' => $this->currency->format($sisa),
+						'invoice'	=> $result['referensi'],
+						'no_dokumen'	=> $result['no_dokumen'],
+						'linkterkait'	=> $result['linkterkait'],
+						'action'      => $action
+					);*/
+					
+				}
+			}else{
+				if($result['tanggal_transaksi'] < $filter_tgl_awal){
+					$sblm = $sisa;
+				}
+				if(date('Y-m-d',strtotime($result['tanggal_transaksi'])) >= $filter_tgl_awal & date('Y-m-d',strtotime($result['tanggal_transaksi'])) <= $filter_tgl_akhir){
+					$totalmasuk += $result['saldomasuk'];
+					$totalkeluar += $result['saldokeluar'];
+					/*$this->data['kartustoks'][] = array(
+						'id'	=> $result['id'],
+						'date_trans'=> date('d F Y',strtotime($result['tanggal_transaksi'])),
+						'date_added'=> date('d F Y',strtotime($result['tanggal_input'])),
+						'waktu'	=> date('H:i:s',strtotime($result['tanggal_transaksi'])),
+						'saldo_masuk'   => $this->currency->format($result['saldomasuk']),
+						'saldo_keluar'   => $this->currency->format($result['saldokeluar']),
+						'saldo_akhir'   => $this->currency->format($result['saldomasuk'] - $result['saldokeluar']),
+						//'saldoakhirtable'   => $this->currency->format($result['saldoakhir']),
+						'masuk'   => $result['saldomasuk'],
+						'keluar'   => $result['saldokeluar'],
+						'ket'	=> $result['keterangan'],
+						'sisa' => $this->currency->format($sisa),
+						'invoice'	=> $result['referensi'],
+						'no_dokumen'	=> $result['no_dokumen'],
+						'linkterkait'	=> $result['linkterkait'],
+						'action'      => $action
+					);*/
+					$this->data['kartustoks'][] = array(
+						'id'	=> $result['id'],
+						'date_trans'=> date('d F Y',strtotime($result['tanggal_transaksi'])),
+						'date_added'=> date('d F Y',strtotime($result['tanggal_input'])),
+						'waktu'	=> date('H:i:s',strtotime($result['tanggal_transaksi'])),
+						'saldo_masuk'   => $this->currency->format($result['saldomasuk']),
+						'saldo_keluar'   => $this->currency->format($result['saldokeluar']),
+						'saldo_akhir'   => $this->currency->format($result['saldomasuk'] - $result['saldokeluar']),
+						//'saldoakhirtable'   => $this->currency->format($result['saldoakhir']),
+						'masuk'   => $result['saldomasuk'],
+						'keluar'   => $result['saldokeluar'],
+						'ket'	=> $result['keterangan'],
+						'linkterkait'	=> !empty($result['no_dokumen'])?$result['no_dokumen']:$result['linkterkait'],
+						'urlref'	=> $urlref,
+						'type'	=> $result['type'],
+						'sisa' => $this->currency->format($sisa),
+						'invoice'	=> $result['referensi'],
+						'action'      => $action,
+						'akunlawan'	=> $akunlawan,
+					);
+				}
+				
+			}
+			$a++;
+		}
+		if($this->user->getUsername()=="pawits"){
+			echo "<pre>";print_r($results);exit;
+		}
+		array_reverse($this->data['kartustoks']);
+		$this->data['sblm'] =$this->currency->format($sblm);
+		$this->data['totalmasuk'] =$this->currency->format($totalmasuk);
+		$this->data['totalkeluar'] =$this->currency->format($totalkeluar);
+		$this->data['saldo_akhir'] =$this->currency->format($totalmasuk - $totalkeluar);
+		$saldoawal=$this->data['saldoawal'];
+		$this->data['totalsaldo'] =$this->currency->format($sblm+($totalmasuk - $totalkeluar));
+		$this->data['heading_title'] = 'Mutasi Bank';
+		$this->data['token'] = $this->session->data['token'];
+		$url = '';
+
+		if (isset($this->request->get['sorttransaksi'])) {
+			$url .= '&sorttransaksi=' . $this->request->get['sorttransaksi'];
+		}
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . $this->request->get['filter_name'];
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+		}
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+		}
+		
+		if (isset($this->request->get['filter_saldo'])) {
+			$url .= '&filter_saldo=' . $this->request->get['filter_saldo'];
+		}
+		if (isset($this->request->get['filter_ref'])) {
+			$url .= '&filter_ref=' . $this->request->get['filter_ref'];
+		}
+		if (isset($this->request->get['filter_keterangan'])) {
+			$url .= '&filter_keterangan=' . $this->request->get['filter_keterangan'];
+		}
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+
+		$next=$pagekartu+1;
+
+		$pagination = new Pagination();
+		$pagination->total = $order_total;
+		$pagination->page = $pagekartu;
+		$pagination->limit = $this->config->get('config_admin_limit');
+		$pagination->text = $this->language->get('text_pagination');
+		$pagination->url = $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url . '&pagekartu={page}', 'SSL');
+
+		$this->data['pagination'] = $pagination->render();
+
+		$this->data['jeniss']=$this->model_keuangan_bank->getTypeMutasi();
+
+		$this->data['filter_tgl_awal']=$filter_tgl_awal;
+		$this->data['filter_tgl_akhir']=$filter_tgl_akhir;
+		$this->data['filter_jenis']=$filter_jenis;
+		$this->data['filter_saldo']=$filter_saldo;
+		$this->data['filter_ref']=$filter_ref;
+		$this->data['filter_keterangan']=$filter_keterangan;
+		$this->template = 'keuangan/mutasi.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+		$this->response->setOutput($this->render());
+	}
+	public function exportexcel() {
+
+		$this->document->setTitle('Mutasi Bank');
+
+		$url = '';
+		
+		if (isset($this->request->get['sorttransaksi'])) {
+			$url .= '&sorttransaksi=' . $this->request->get['sorttransaksi'];
+		}
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . $this->request->get['filter_name'];
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+		$this->data['url'] = $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url, 'SSL');
+
+		if (isset($this->request->get['pagekartu'])) {
+			$url .= '&pagekartu=' . $this->request->get['pagekartu'];
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+		}
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+		}
+
+		if (isset($this->request->get['bank_id'])) {
+			$bank_id = $this->request->get['bank_id'];
+		} else {
+			$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+		}
+
+		if (isset($this->request->get['pagekartu'])) {
+			$pagekartu = $this->request->get['pagekartu'];
+		} else {
+			$pagekartu = 1;
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$filter_tgl_awal = $this->request->get['filter_tgl_awal'];
+		} else {
+			$filter_tgl_awal = '';
+		}
+
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$filter_tgl_akhir = $this->request->get['filter_tgl_akhir'];
+		} else {
+			$filter_tgl_akhir = '';
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$filter_jenis = $this->request->get['filter_jenis'];
+		} else {
+			$filter_jenis = '';
+		}
+		
+		if (isset($this->request->get['filter_saldo'])) {
+			$filter_saldo = $this->request->get['filter_saldo'];
+		} else {
+			$filter_saldo =null;
+		}
+		if (isset($this->request->get['filter_ref'])) {
+			$filter_ref = $this->request->get['filter_ref'];
+		} else {
+			$filter_ref =null;
+		}
+		if (isset($this->request->get['filter_keterangan'])) {
+			$filter_keterangan = $this->request->get['filter_keterangan'];
+		} else {
+			$filter_keterangan =null;
+		}
+
+		if (isset($this->request->get['sorttransaksi'])) {
+			$sorttransaksi = $this->request->get['sorttransaksi'];
+		} else {
+			$sorttransaksi =null;
+		}
+
+		if (isset($this->session->data['success'])) {
+			$this->data['success'] = $this->session->data['success'];
+
+			unset($this->session->data['success']);
+		} else {
+			$this->data['success'] = '';
+		}
+		$this->load->model('keuangan/bank');
+		$data = array(
+			'sorttransaksi' => $sorttransaksi,
+      		'filter_tgl_awal'  => $filter_tgl_awal,
+			'filter_tgl_akhir'	=> $filter_tgl_akhir,
+			'bank_id'	=> $bank_id,
+			'filter_jenis'	=> $filter_jenis,
+			'filter_saldo'	=> $filter_saldo,
+			'filter_ref'	=> $filter_ref,
+			'filter_keterangan'	=> $filter_keterangan,
+			//'start'                  => ($pagekartu - 1) * $this->config->get('config_admin_limit'),
+			//'limit'                  => $this->config->get('config_admin_limit')
+		);
+		$results=$this->model_keuangan_bank->laporanmutasibank($bank_id,$data);
+		$order_total=$this->model_keuangan_bank->totallaporanmutasibank($bank_id,$data);;
+		$this->data['totalsaldo']=0;
+		$this->data['saldoawal']=$this->model_keuangan_bank->saldoawalnew($bank_id);
+		$this->data['bank']=$this->model_keuangan_bank->getBank(array(),array(),array('id'  => $bank_id));
+		$this->data['cancel'] = $this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		$this->data['exportexcel'] = $this->url->link('keuangan/bank/exportexcel', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		$tot = $this->model_keuangan_bank->totalan($data);
+		$this->data['totalsaldomasuk'] = $tot['saldomasuk'];
+		$this->data['totalsaldokeluar'] = $tot['saldokeluar'];
+		$this->load->model('user/user');
+		$custdata=$this->model_user_user->getAksesData($this->user->getId(),7);
+		$this->data['kartustoks']=array();
+		$i=0;
+		$totalmasuk=0;
+		$totalkeluar=0;
+		$sisa=0;
+		$a=0;
+		$sblm=0;
+		//$results = array_reverse($results);
+		if($this->user->getUsername()=="pawits"){
+			echo "<pre>";print_r($results);exit;
+		}
+		foreach (array_reverse($results) as $result) {
+			$action=array();
+			if($custdata){
+				/**/
+				$action[] = array(
+					'text' => 'Edit Mutasi',
+					'href' => $this->url->link('keuangan/bank/editmutasi', 'token=' . $this->session->data['token'] . '&bank_id='.$bank_id.'&id=' . $result['id'].$url, 'SSL')
+				);
+				$action[] = array(
+					'text' => 'Hapus Mutasi',
+					'href' => $this->url->link('keuangan/bank/hapusmutasi', 'token=' . $this->session->data['token'] . '&bank_id='.$bank_id.'&id=' . $result['id'].$url, 'SSL')
+				);
+				
+			}
+			/**/
+			if($a==0){
+				$sisa += ($result['saldomasuk'] - $result['saldokeluar']);
+			}else{
+				$sisa += ($result['saldomasuk'] - $result['saldokeluar']);
+			}
+			if($filter_tgl_awal==''){
+				if($result['tanggal_transaksi'] < date('Y-m-d',strtotime('first day of this month'))){
+					$sblm = $sisa;
+				}
+				if(date('Y-m-d',strtotime($result['tanggal_transaksi'])) >= date('Y-m-d',strtotime('first day of this month')) && $result['tanggal_transaksi'] <= date('Y-m-d',strtotime('last day of this month'))){
+					$totalmasuk += $result['saldomasuk'];
+					$totalkeluar += $result['saldokeluar'];
+					$this->data['kartustoks'][] = array(
+						'id'	=> $result['id'],
+						'date_trans'=> date('d F Y',strtotime($result['tanggal_transaksi'])),
+						'date_added'=> date('d F Y',strtotime($result['tanggal_input'])),
+						'waktu'	=> date('H:i:s',strtotime($result['tanggal_transaksi'])),
+						'saldo_masuk'   => $result['saldomasuk'],
+						'saldo_keluar'   => $result['saldokeluar'],
+						'saldo_akhir'   => $result['saldomasuk'] - $result['saldokeluar'],
+						//'saldoakhirtable'   => $this->currency->format($result['saldoakhir']),
+						'masuk'   => $result['saldomasuk'],
+						'keluar'   => $result['saldokeluar'],
+						'ket'	=> $result['keterangan'],
+						'linkterkait'	=> $result['linkterkait'],
+						'sisa' =>$sisa,
+						'invoice'	=> $result['referensi'],
+						'action'      => $action
+					);
+				}
+			}else{
+				if($result['tanggal_transaksi'] < $filter_tgl_awal){
+					$sblm = $sisa;
+				}
+				if(date('Y-m-d',strtotime($result['tanggal_transaksi'])) >= $filter_tgl_awal & date('Y-m-d',strtotime($result['tanggal_transaksi'])) <= $filter_tgl_akhir){
+					$totalmasuk += $result['saldomasuk'];
+					$totalkeluar += $result['saldokeluar'];
+					$this->data['kartustoks'][] = array(
+						'id'	=> $result['id'],
+						'date_trans'=> date('d F Y',strtotime($result['tanggal_transaksi'])),
+						'date_added'=> date('d F Y',strtotime($result['tanggal_input'])),
+						'waktu'	=> date('H:i:s',strtotime($result['tanggal_transaksi'])),
+						'saldo_masuk'   => $result['saldomasuk'],
+						'saldo_keluar'   => $result['saldokeluar'],
+						'saldo_akhir'   => $result['saldomasuk'] - $result['saldokeluar'],
+						//'saldoakhirtable'   => $this->currency->format($result['saldoakhir']),
+						'masuk'   => $result['saldomasuk'],
+						'keluar'   => $result['saldokeluar'],
+						'ket'	=> $result['keterangan'],
+						'linkterkait'	=> $result['linkterkait'],
+						'sisa' =>$sisa,
+						'invoice'	=> $result['referensi'],
+						'action'      => $action
+					);
+				}
+				
+			}
+			$a++;
+		}
+		array_reverse($this->data['kartustoks']);
+		$this->data['sblm'] =$this->currency->format($sblm);
+		$this->data['totalmasuk'] =$this->currency->format($totalmasuk);
+		$this->data['totalkeluar'] =$this->currency->format($totalkeluar);
+		$this->data['saldo_akhir'] =$this->currency->format($totalmasuk - $totalkeluar);
+		$saldoawal=$this->data['saldoawal'];
+		$this->data['totalsaldo'] =$this->currency->format($sblm+($totalmasuk - $totalkeluar));
+		$this->data['heading_title'] = 'Mutasi Bank';
+		$this->data['token'] = $this->session->data['token'];
+		$url = '';
+
+		if (isset($this->request->get['sorttransaksi'])) {
+			$url .= '&sorttransaksi=' . $this->request->get['sorttransaksi'];
+		}
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . $this->request->get['filter_name'];
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+		}
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+		}
+		
+		if (isset($this->request->get['filter_saldo'])) {
+			$url .= '&filter_saldo=' . $this->request->get['filter_saldo'];
+		}
+		if (isset($this->request->get['filter_ref'])) {
+			$url .= '&filter_ref=' . $this->request->get['filter_ref'];
+		}
+		if (isset($this->request->get['filter_keterangan'])) {
+			$url .= '&filter_keterangan=' . $this->request->get['filter_keterangan'];
+		}
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+
+		$next=$pagekartu+1;
+
+		$pagination = new Pagination();
+		$pagination->total = $order_total;
+		$pagination->page = $pagekartu;
+		$pagination->limit = $this->config->get('config_admin_limit');
+		$pagination->text = $this->language->get('text_pagination');
+		$pagination->url = $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url . '&pagekartu={page}', 'SSL');
+
+		$this->data['pagination'] = $pagination->render();
+
+		$this->data['jeniss']=$this->model_keuangan_bank->getTypeMutasi();
+
+		$this->data['filter_tgl_awal']=$filter_tgl_awal;
+		$this->data['filter_tgl_akhir']=$filter_tgl_akhir;
+		$this->data['filter_jenis']=$filter_jenis;
+		$this->data['filter_saldo']=$filter_saldo;
+		$this->data['filter_ref']=$filter_ref;
+		$this->data['filter_keterangan']=$filter_keterangan;
+		$this->template = 'laporan/mutasi_excel.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+
+		$this->response->setOutput($this->render());
+	}
+	// End Baru
+	// baru 7 Januari 2019
+	public function jurnal(){
+		$id = $this->request->get['id'];
+		$type = $this->request->get['type'];
+		$sql="SELECT * FROM jurnal_umum WHERE ref='".$id."' ";
+		if(!empty($type)){
+			if($type==31){
+				$sql .=" AND type='31' ";
+			}else{
+				$sql .=" AND type='1'";
+			}
+		}else{
+			$sql .=" AND type='1'";
+		}
+		$j = $this->db->query($sql);
+		$jd = $this->db->query("SELECT * FROM jurnal_umum_detail WHERE jurnal_id='".$j->row['id']."' order by urutan asc");
+		$linkterkait = ($j->row['linkterkait']==null)?'-':$j->row['linkterkait'];
+		$ref = ($j->row['linkterkait']==null)?$j->row['ref']:$j->row['ref'];
+		
+		echo "<table class='table table-bordered'>";
+		echo "<tr align='center'>";
+		echo "<td><b>Tanggal</b></td>";
+		echo "<td><b>Ref</b></td>";
+		echo "<td><b>No.Jurnal</b></td>";
+		echo "<td><b>Keterangan</b></td>";
+		echo "<td colspan='2'><b>Debet</b></td>";
+		echo "<td colspan='2'><b>Kredit</b></td>";
+		echo "</tr>";
+		echo "<tr>";
+		echo "<td></td><td></td></td><td></td><td></td><td><b>ref akun</b></td><td></td><td><b>ref akun</b></td><td></td>";
+		echo "</tr>";
+		echo "<tr>";
+		echo "<td>".date('d/m/Y',strtotime($j->row['tanggal']))."</td><td>".$ref."</td></td><td>".$linkterkait."</td><td>".$j->row['keterangan']."</td><td></td><td></td><td></td><td></td>";
+		foreach($jd->rows as $detail  ){
+			echo "<tr>";
+			echo "<td></td><td></td><td></td>";
+			if($detail['debet']>0){
+			echo "<td>".$detail['keterangan']."</td>";
+			echo "<td>".$detail['ref_akun']."</td>";
+			echo "<td>".$this->currency->format($detail['debet'])."</td>";
+			echo "<td></td>";
+			echo "<td></td>";
+			}
+			if($detail['kredit']>0){
+			echo "<td>".$detail['keterangan']."</td>";
+			echo "<td></td>";
+			echo "<td></td>";
+			echo "<td>".$detail['ref_akun']."</td>";
+			echo "<td>".$this->currency->format($detail['kredit'])."</td>";			
+			}			
+			echo "</tr>";
+		}
+		echo "</tr>";
+		/**/
+		echo "<table>";
+	}
+	// end baru
+	public function index() {
+		$this->load->language('catalog/category');
+
+		$this->document->setTitle('Bank');
+
+		$this->load->model('keuangan/bank');
+
+		$this->getList();
+	}
+
+	public function insert() {
+		$this->load->language('catalog/category');
+
+		$this->document->setTitle('Bank');
+
+		$this->load->model('keuangan/bank');
+
+		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
+			$this->model_keuangan_bank->addBank($this->request->post);
+
+			$this->session->data['success'] = 'Data bank berhasil ditambah.';
+			$url = '';
+			if(isset($this->request->get)){
+				foreach($this->request->get as $key => $value){
+					if($key != 'route' & $key !='token'){
+						$url .="&".$key."=".$value;
+					}
+				}
+			}
+
+		/*	if (isset($this->request->get['filter_name'])) {
+				$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
+			}
+
+			if (isset($this->request->get['page'])) {
+				$url .= '&page=' . $this->request->get['page'];
+			}*/
+			$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'].$url, 'SSL'));
+		}
+
+		$this->getForm();
+	}
+
+	public function update() {
+		$this->load->language('catalog/category');
+
+		$this->document->setTitle('Bank');
+
+		$this->load->model('keuangan/bank');
+
+		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
+			$data=$this->request->post;
+			$option_info = $this->model_keuangan_bank->getBank(array(),array(),array('id'	=> $this->request->get['bank_id']),array());
+			if ((utf8_strlen($this->request->post['rek_parent']) < 1) || (utf8_strlen($this->request->post['rek_parent']) > 255)) {
+				$data['rek_parent'] = $option_info['rek_parent'];
+			}
+
+			$this->model_keuangan_bank->editBank($data,array('id'	=> $this->request->get['bank_id']));
+
+			$this->session->data['success'] = 'Data Bank berhasil diperbarui';
+			$url='';
+			if(isset($this->request->get)){
+				foreach($this->request->get as $key => $value){
+					if($key != 'route' & $key !='token'){
+						$url .="&".$key."=".$value;
+					}
+				}
+			}
+
+		/*	if (isset($this->request->get['filter_name'])) {
+				$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
+			}
+
+			if (isset($this->request->get['page'])) {
+				$url .= '&page=' . $this->request->get['page'];
+			}*/
+			$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'].$url, 'SSL'));
+		}
+
+		$this->getForm();
+	}
+
+	public function delete() {
+		$this->load->language('catalog/category');
+
+		$this->document->setTitle('Bank');
+
+		$this->load->model('keuangan/bank');
+
+		if (isset($this->request->post['selected']) && $this->validateDelete()) {
+			foreach ($this->request->post['selected'] as $bank_id) {
+				$this->model_keuangan_bank->updateBank(array('hapus'=>1),array('id'	=> $bank_id));
+			}
+
+			$this->session->data['success'] = 'Data Bank berhasil dihapus';
+
+			$url = '';
+
+			if(isset($this->request->get)){
+				foreach($this->request->get as $key => $value){
+					if($key != 'route' & $key !='token'){
+						$url .="&".$key."=".$value;
+					}
+				}
+			}
+
+
+			$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'].$url, 'SSL'));
+		}
+
+		$this->getList();
+	}
+
+	private function getList() {
+		if (isset($this->request->get['filter_name'])) {
+			$filter_name = $this->request->get['filter_name'];
+		} else {
+			$filter_name = null;
+		}
+		if (isset($this->request->get['page'])) {
+			$page = $this->request->get['page'];
+		} else {
+			$page = 1;
+		}
+
+		$url = '';
+
+		if(isset($this->request->get)){
+			foreach($this->request->get as $key => $value){
+				if($key != 'route' & $key !='token'){
+					$url .="&".$key."=".$value;
+				}
+			}
+		}
+
+		$this->data['insert'] = $this->url->link('keuangan/bank/insert', 'token=' . $this->session->data['token'], 'SSL');
+		$this->data['delete'] = $this->url->link('keuangan/bank/delete', 'token=' . $this->session->data['token'], 'SSL');
+
+		$this->data['banks'] = array();
+
+		$data = array(
+			'name'	  => array('LIKE',$filter_name),
+			'hapus'	=> array('<',1),
+			'bankpusat'=>1,
+
+		);
+		$limit=$this->config->get('config_admin_limit');
+		$offset=($page - 1) * $this->config->get('config_admin_limit');
+
+		$results = $this->model_keuangan_bank->getBanks(array(),array(),$data,array('currency' => 'ASC','name'	=> 'ASC'),$limit,$offset);
+		$product_total = $this->model_keuangan_bank->getBank(array('count(*) as total'),array(),$data,array(),0,null);
+		$i=0;
+		foreach ($results as $result) {
+			
+			$action = array();
+
+			$action[] = array(
+				'text' => 'Edit',
+				'href' => $this->url->link('keuangan/bank/update', 'token=' . $this->session->data['token'] . '&bank_id=' . $result['id'], 'SSL')
+			);
+			$action[] = array(
+				'text' => $this->language->get('Input Transaksi'),
+				'href' => $this->url->link('keuangan/bank/inserttransaksi', 'token=' . $this->session->data['token'] . '&bank_id=' . $result['id'] . $url, 'SSL')
+			);
+			$action[] = array(
+				'text' => 'Mutasi',
+				'href' => $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . '&bank_id=' . $result['id'], 'SSL')
+			);
+
+
+			$this->data['banks'][] = array(
+				'bank_id' => $result['id'],
+				'nama_bank'        => $result['name'],
+				'rekening'	=> $result['rekening'],
+				'rek_parent'	=> $result['rek_parent'],
+				'display_order'	=> $result['display_order'],
+				'cabang'	=> $result['cabang'],
+				'kota'	=> $result['kota'],
+				'swiftcode'	=> $result['swiftcode'],
+				'hutangprk'	=> $result['hutangprk'],
+				'totalhutang'	=> number_format($result['totalhutang'],0),
+				'plafon'	=> number_format($result['plafon'],0),
+				'pemilik'	=> $result['pemilik'],
+				'candelete'	=> $result['saldo'] > 0?0:1,
+				'saldo'	=> number_format($result['saldo'],0),
+				'currency'	=> $result['currency'] == 1?'Rp':'$',
+				'selected'    => isset($this->request->post['selected']) && in_array($result['bank_id'], $this->request->post['selected']),
+				//'masuk'   => $result['saldomasuk'],
+				//'keluar'   => $result['saldokeluar'],
+				//'saldoakhir'   => ($result['id']==$barispertama['id'])?0:$saldosebelumnya[$i]['saldo_sebelumnya'],
+				//'saldosebelumnya' => $saldosebelumnya[$i]['saldo_sebelumnya'],
+				'action'      => $action
+			);
+			//$i++;
+		}
+
+
+
+ 		if (isset($this->error['warning'])) {
+			$this->data['error_warning'] = $this->error['warning'];
+		} else {
+			$this->data['error_warning'] = '';
+		}
+
+		if (isset($this->session->data['success'])) {
+			$this->data['success'] = $this->session->data['success'];
+
+			unset($this->session->data['success']);
+		} else {
+			$this->data['success'] = '';
+		}
+
+		$url = '';
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
+		}
+		$pagination = new Pagination();
+		$pagination->total = $product_total['total'];
+		$pagination->page = $page;
+		$pagination->limit = $this->config->get('config_admin_limit');
+		$pagination->text = $this->language->get('text_pagination');
+		$pagination->url = $this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url . '&page={page}', 'SSL');
+
+		$this->data['pagination'] = $pagination->render();
+
+		$this->data['filter_name'] = $filter_name;
+		$this->data['token'] = $this->session->data['token'];
+
+		$this->template = 'keuangan/bank_list.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+
+		$this->response->setOutput($this->render());
+	}
+
+	private function getForm() {
+
+		$url = '';
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+ 		if (isset($this->error['warning'])) {
+			$this->data['error_warning'] = $this->error['warning'];
+		} else {
+			$this->data['error_warning'] = '';
+		}
+
+ 		if (isset($this->error)) {
+			$this->data['error'] = $this->error;
+		} else {
+			$this->data['error'] = array();
+		}
+
+
+
+		if (!isset($this->request->get['bank_id'])) {
+			$this->data['action'] = $this->url->link('keuangan/bank/insert', 'token=' . $this->session->data['token'].$url, 'SSL');
+		} else {
+			$this->data['action'] = $this->url->link('keuangan/bank/update', 'token=' . $this->session->data['token'].$url. '&bank_id=' . $this->request->get['bank_id'], 'SSL');
+		}
+
+		$this->data['cancel'] = $this->url->link('keuangan/bank', 'token=' . $this->session->data['token'], 'SSL');
+
+		if (isset($this->request->get['bank_id']) && ($this->request->server['REQUEST_METHOD'] != 'POST')) {
+      		$option_info = $this->model_keuangan_bank->getBank(array(),array(),array('id'	=> $this->request->get['bank_id']),array());
+    	}
+
+		$this->data['token'] = $this->session->data['token'];
+
+		if($this->request->server['REQUEST_METHOD'] == 'POST'){
+			$this->data['name'] = $this->request->post['name'];
+			$this->data['rekening'] = $this->request->post['rekening'];
+			$this->data['currency'] = $this->request->post['currency'];
+			$this->data['pemilik'] = $this->request->post['pemilik'];
+			$this->data['rek_parent'] = $this->request->post['rek_parent'];
+			$this->data['display_order'] = $this->request->post['display_order'];
+			$this->data['cabang'] = $this->request->post['cabang'];
+			$this->data['kota'] = $this->request->post['kota'];
+			$this->data['swiftcode'] = $this->request->post['swiftcode'];
+			$this->data['hutangprk'] = $this->request->post['hutangprk'];
+			$this->data['plafon'] = $this->request->post['plafon'];
+
+		}else if(!empty($option_info)){
+			$this->data['name'] = $option_info['name'];
+			$this->data['rekening'] = $option_info['rekening'];
+			$this->data['rek_parent'] = $option_info['rek_parent'];
+			$this->data['currency'] = $option_info['currency'];
+			$this->data['pemilik'] = $option_info['pemilik'];
+			$this->data['display_order'] = $option_info['display_order'];
+			$this->data['cabang'] = $option_info['cabang'];
+			$this->data['kota'] = $option_info['kota'];
+			$this->data['swiftcode'] = $option_info['swiftcode'];
+			$this->data['hutangprk'] = $option_info['hutangprk'];
+			$this->data['plafon'] = $option_info['plafon'];
+
+		}else{
+			$this->data['name'] = "";
+			$this->data['rekening'] = "";
+			$this->data['rek_parent'] = "";
+			$this->data['currency'] = "";
+			$this->data['pemilik'] = "";
+			$this->data['display_order'] = 0;
+			$this->data['cabang'] = "";
+			$this->data['kota'] = "";
+			$this->data['swiftcode'] = "";
+			$this->data['hutangprk'] = 2;
+			$this->data['plafon'] = 0;
+		}
+
+		$this->template = 'keuangan/bank_form.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+
+		$this->response->setOutput($this->render());
+	}
+
+	private function validateForm() {
+		/*if (!$this->user->hasPermission('modify', 'keuangan/bank')) {
+			$this->error['warning'] = 'Anda tidak memiliki hak untuk memodifikasi menu bank';
+		}*/
+
+		if ((utf8_strlen($this->request->post['name']) < 1) || (utf8_strlen($this->request->post['name']) > 255)) {
+			$this->error['name'] = 'Nama bank harus diisi.';
+		}
+
+
+			if ((utf8_strlen($this->request->post['rekening']) < 1) || (utf8_strlen($this->request->post['rekening']) > 255)) {
+				$this->error['rekening'] = 'Nomor Rekening harus diisi.';
+			}
+		//}
+		if ((utf8_strlen($this->request->post['pemilik']) < 1) || (utf8_strlen($this->request->post['pemilik']) > 255)) {
+			$this->error['pemilik'] = 'Nama pemilik harus diisi.';
+		}
+		if(!isset($this->request->get['bank_id'])){
+			if ((utf8_strlen($this->request->post['rek_parent']) < 1) || (utf8_strlen($this->request->post['rek_parent']) > 255)) {
+				$this->error['pemilik'] = 'Nomor akun harus diisi.';
+			}
+		}
+		if (!$this->error) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private function validateDelete() {
+		/*if (!$this->user->hasPermission('modify', 'keuangan/bank')) {
+			$this->error['warning'] = 'Anda tidak memiliki hak untuk memodifikasi menu ukuran/warna';
+		}*/
+
+		if (!$this->error) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/*
+	public function mutasi() {
+		//$this->load->language('report/stokbarang');
+
+		$this->document->setTitle('Mutasi Bank');
+
+			$url = '';
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . $this->request->get['filter_name'];
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+		$this->data['url'] = $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url, 'SSL');
+
+		if (isset($this->request->get['pagekartu'])) {
+			$url .= '&pagekartu=' . $this->request->get['pagekartu'];
+		}
+
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+		}
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+		}
+
+		if (isset($this->request->get['bank_id'])) {
+			$bank_id = $this->request->get['bank_id'];
+		} else {
+			$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+		}
+
+		if (isset($this->request->get['pagekartu'])) {
+			$pagekartu = $this->request->get['pagekartu'];
+		} else {
+			$pagekartu = 1;
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$filter_tgl_awal = $this->request->get['filter_tgl_awal'];
+		} else {
+			$filter_tgl_awal = '';
+		}
+
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$filter_tgl_akhir = $this->request->get['filter_tgl_akhir'];
+		} else {
+			$filter_tgl_akhir = '';
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$filter_jenis = $this->request->get['filter_jenis'];
+		} else {
+			$filter_jenis = '';
+		}
+		
+		if (isset($this->request->get['filter_saldo'])) {
+			$filter_saldo = $this->request->get['filter_saldo'];
+		} else {
+			$filter_saldo =null;
+		}
+		if (isset($this->request->get['filter_ref'])) {
+			$filter_ref = $this->request->get['filter_ref'];
+		} else {
+			$filter_ref =null;
+		}
+		if (isset($this->request->get['filter_keterangan'])) {
+			$filter_keterangan = $this->request->get['filter_keterangan'];
+		} else {
+			$filter_keterangan =null;
+		}
+
+		if (isset($this->session->data['success'])) {
+			$this->data['success'] = $this->session->data['success'];
+
+			unset($this->session->data['success']);
+		} else {
+			$this->data['success'] = '';
+		}
+
+		$this->load->model('keuangan/bank');
+
+		$data = array(
+			'filter_tgl_awal'  => $filter_tgl_awal,
+			'filter_tgl_akhir'	=> $filter_tgl_akhir,
+			'bank_id'	=> $bank_id,
+			'filter_jenis'	=> $filter_jenis,
+			'filter_saldo'	=> $filter_saldo,
+			'filter_ref'	=> $filter_ref,
+			'filter_keterangan'	=> $filter_keterangan,
+			'start'                  => ($pagekartu - 1) * $this->config->get('config_admin_limit'),
+			'limit'                  => $this->config->get('config_admin_limit')
+		);
+
+		$order_total = $this->model_keuangan_bank->getTotalRecordSaldo($data);
+
+		$results = $this->model_keuangan_bank->getSaldo($data);
+		$this->data['totalsaldo']=$this->model_keuangan_bank->getSelectedSaldo($data);
+		$this->data['bank']=$this->model_keuangan_bank->getBank(array(),array(),array('id'  => $bank_id));
+		$this->data['cancel'] = $this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		
+		$tot = $this->model_keuangan_bank->totalan($data);
+		$this->data['totalsaldomasuk'] = $tot['saldomasuk'];
+		$this->data['totalsaldokeluar'] = $tot['saldokeluar'];
+		if($this->user->getUsername()=="pawits"){
+			print_r($tot['saldomasuk']);exit;
+		}
+		$this->load->model('user/user');
+		$custdata=$this->model_user_user->getAksesData($this->user->getId(),7);
+		$this->data['kartustoks']=array();
+		$i=0;
+		foreach ($results as $result) {
+			$saldosebelumnya=$this->model_keuangan_bank->getsaldosebelumnya($result['bank_id']);
+			if($this->user->getUsername()=="pawits"){
+				echo "<pre>";print_r($saldosebelumnya);exit;
+			}
+			$action=array();
+			if($custdata){
+				$action[] = array(
+					'text' => 'Edit Mutasi',
+					'href' => $this->url->link('keuangan/bank/editmutasi', 'token=' . $this->session->data['token'] . '&bank_id='.$bank_id.'&id=' . $result['id'].$url, 'SSL')
+				);
+				$action[] = array(
+					'text' => 'Hapus Mutasi',
+					'href' => $this->url->link('keuangan/bank/hapusmutasi', 'token=' . $this->session->data['token'] . '&bank_id='.$bank_id.'&id=' . $result['id'].$url, 'SSL')
+				);
+			}
+
+			$this->data['kartustoks'][] = array(
+				'id'	=> $result['id'],
+				'date_trans'=> date('d F Y',strtotime($result['date_trans'])),
+				'date_added'=> date('d F Y',strtotime($result['date_added'])),
+				'waktu'	=> date('H:i:s',strtotime($result['date_trans'])),
+				'saldo_masuk'   => $this->currency->format($result['saldomasuk']),
+				'saldo_keluar'   => $this->currency->format($result['saldokeluar']),
+				'ket'	=> $result['keterangan'],
+				'invoice'	=> $result['ref'],
+				'type'	=> $result['type_name'],
+				'masuk'   => $result['saldomasuk'],
+				'keluar'   => $result['saldokeluar'],
+				//'saldoakhir'   => ($result['id']==$barispertama['id'])?0:$saldosebelumnya[$i]['saldo_sebelumnya'],
+				'saldosebelumnya' => $saldosebelumnya[$i]['saldo_sebelumnya'],
+				'action'      => $action
+			);
+			$i++;
+		}
+
+		$this->data['heading_title'] = 'Mutasi Bank';
+		$this->data['token'] = $this->session->data['token'];
+
+
+
+		$url = '';
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . $this->request->get['filter_name'];
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+		}
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+		}
+		
+		if (isset($this->request->get['filter_saldo'])) {
+			$url .= '&filter_saldo=' . $this->request->get['filter_saldo'];
+		}
+		if (isset($this->request->get['filter_ref'])) {
+			$url .= '&filter_ref=' . $this->request->get['filter_ref'];
+		}
+		if (isset($this->request->get['filter_keterangan'])) {
+			$url .= '&filter_keterangan=' . $this->request->get['filter_keterangan'];
+		}
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+
+		$next=$pagekartu+1;
+
+		$pagination = new Pagination();
+		$pagination->total = $order_total;
+		$pagination->page = $pagekartu;
+		$pagination->limit = $this->config->get('config_admin_limit');
+		$pagination->text = $this->language->get('text_pagination');
+		$pagination->url = $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url . '&pagekartu={page}', 'SSL');
+
+		$this->data['pagination'] = $pagination->render();
+
+		$this->data['jeniss']=$this->model_keuangan_bank->getTypeMutasi();
+
+		$this->data['filter_tgl_awal']=$filter_tgl_awal;
+		$this->data['filter_tgl_akhir']=$filter_tgl_akhir;
+		$this->data['filter_jenis']=$filter_jenis;
+		$this->data['filter_saldo']=$filter_saldo;
+		$this->data['filter_ref']=$filter_ref;
+		$this->data['filter_keterangan']=$filter_keterangan;
+		$this->template = 'keuangan/mutasi.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+
+		$this->response->setOutput($this->render());
+	}
+	*/
+	//
+	/*
+	public function mutasi() {
+		//$this->load->language('report/stokbarang');
+
+		$this->document->setTitle('Mutasi Bank');
+
+		$url = '';
+		
+		if (isset($this->request->get['sorttransaksi'])) {
+			$url .= '&sorttransaksi=' . $this->request->get['sorttransaksi'];
+		}
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . $this->request->get['filter_name'];
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+		$this->data['url'] = $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url, 'SSL');
+
+		if (isset($this->request->get['pagekartu'])) {
+			$url .= '&pagekartu=' . $this->request->get['pagekartu'];
+		}
+
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+		}
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+		}
+
+		if (isset($this->request->get['bank_id'])) {
+			$bank_id = $this->request->get['bank_id'];
+		} else {
+			$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+		}
+
+		if (isset($this->request->get['pagekartu'])) {
+			$pagekartu = $this->request->get['pagekartu'];
+		} else {
+			$pagekartu = 1;
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$filter_tgl_awal = $this->request->get['filter_tgl_awal'];
+		} else {
+			$filter_tgl_awal = '';
+		}
+
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$filter_tgl_akhir = $this->request->get['filter_tgl_akhir'];
+		} else {
+			$filter_tgl_akhir = '';
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$filter_jenis = $this->request->get['filter_jenis'];
+		} else {
+			$filter_jenis = '';
+		}
+		
+		if (isset($this->request->get['filter_saldo'])) {
+			$filter_saldo = $this->request->get['filter_saldo'];
+		} else {
+			$filter_saldo =null;
+		}
+		if (isset($this->request->get['filter_ref'])) {
+			$filter_ref = $this->request->get['filter_ref'];
+		} else {
+			$filter_ref =null;
+		}
+		if (isset($this->request->get['filter_keterangan'])) {
+			$filter_keterangan = $this->request->get['filter_keterangan'];
+		} else {
+			$filter_keterangan =null;
+		}
+
+		if (isset($this->request->get['sorttransaksi'])) {
+			$sorttransaksi = $this->request->get['sorttransaksi'];
+		} else {
+			$sorttransaksi =null;
+		}
+
+		if (isset($this->session->data['success'])) {
+			$this->data['success'] = $this->session->data['success'];
+
+			unset($this->session->data['success']);
+		} else {
+			$this->data['success'] = '';
+		}
+
+		$this->load->model('keuangan/bank');
+
+		$data = array(
+			'sorttransaksi' => $sorttransaksi,
+      		'filter_tgl_awal'  => $filter_tgl_awal,
+			'filter_tgl_akhir'	=> $filter_tgl_akhir,
+			'bank_id'	=> $bank_id,
+			'filter_jenis'	=> $filter_jenis,
+			'filter_saldo'	=> $filter_saldo,
+			'filter_ref'	=> $filter_ref,
+			'filter_keterangan'	=> $filter_keterangan,
+			'start'                  => ($pagekartu - 1) * $this->config->get('config_admin_limit'),
+			'limit'                  => $this->config->get('config_admin_limit')
+		);
+
+		//$order_total = $this->model_keuangan_bank->getTotalRecordSaldo($data);
+		//$results = $this->model_keuangan_bank->getSaldo($data);
+		$results = $this->model_keuangan_bank->getsaldosebelumnya($bank_id,$data);
+		$order_total = count($this->model_keuangan_bank->totalgetsaldosebelumnya($bank_id,$data));
+		$this->data['totalsaldo']=$this->model_keuangan_bank->getSelectedSaldo($data);
+		$this->data['saldoawal']=$this->model_keuangan_bank->getSelectedSaldoAwal($data);
+		$this->data['bank']=$this->model_keuangan_bank->getBank(array(),array(),array('id'  => $bank_id));
+		$this->data['cancel'] = $this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		
+		$tot = $this->model_keuangan_bank->totalan($data);
+		$this->data['totalsaldomasuk'] = $tot['saldomasuk'];
+		$this->data['totalsaldokeluar'] = $tot['saldokeluar'];
+		if($this->user->getUsername()=="pawits"){
+			echo "<pre>";print_r($this->data['saldoawal']);exit;
+		}
+		$this->load->model('user/user');
+		$custdata=$this->model_user_user->getAksesData($this->user->getId(),7);
+		$this->data['kartustoks']=array();
+		$i=0;
+		$totalmasuk=0;
+		$totalkeluar=0;
+		if($this->user->getUsername()=="pawits"){
+			echo "<pre>";print_r($results);exit;
+		}
+		foreach ($results as $result) {
+			$saldosebelumnya=$this->model_keuangan_bank->getsaldosebelumnya($result['bank_id'],$data);
+			if($this->user->getUsername()=="admin3s"){
+				echo "<pre>";print_r($saldosebelumnya);exit;
+			}
+			$action=array();
+			if($custdata){
+				$action[] = array(
+					'text' => 'Edit Mutasi',
+					'href' => $this->url->link('keuangan/bank/editmutasi', 'token=' . $this->session->data['token'] . '&bank_id='.$bank_id.'&id=' . $result['id'].$url, 'SSL')
+				);
+				$action[] = array(
+					'text' => 'Hapus Mutasi',
+					'href' => $this->url->link('keuangan/bank/hapusmutasi', 'token=' . $this->session->data['token'] . '&bank_id='.$bank_id.'&id=' . $result['id'].$url, 'SSL')
+				);
+			}
+			
+			$totalmasuk += $result['saldomasuk'];
+			$totalkeluar += $result['saldokeluar'];
+
+			$this->data['kartustoks'][] = array(
+				'id'	=> $result['id'],
+				'date_trans'=> date('d F Y',strtotime($result['date_trans'])),
+				'date_added'=> date('d F Y',strtotime($result['date_added'])),
+				'waktu'	=> date('H:i:s',strtotime($result['date_trans'])),
+				'saldo_masuk'   => $this->currency->format($result['saldomasuk']),
+				'saldo_keluar'   => $this->currency->format($result['saldokeluar']),
+				'saldoakhirtable'   => $this->currency->format($result['saldoakhir']),
+				'masuk'   => $result['saldomasuk'],
+				'keluar'   => $result['saldokeluar'],
+				//'saldoakhir'   => ($result['id']==$barispertama['id'])?0:$saldosebelumnya[$i]['saldo_sebelumnya'],
+				'saldosebelumnya' => $saldosebelumnya[$i]['saldo_sebelumnya'],
+				'ket'	=> $result['keterangan'],
+				'invoice'	=> $result['ref'],
+				//'type'	=> $result['type_name'],
+				'action'      => $action
+			);
+			$i++;
+		}
+		$this->data['totalmasuk'] =$this->currency->format($tot['saldomasuk']);
+		$this->data['totalkeluar'] =$this->currency->format($tot['saldokeluar']);
+		$this->data['heading_title'] = 'Mutasi Bank';
+		$this->data['token'] = $this->session->data['token'];
+		$url = '';
+
+		if (isset($this->request->get['sorttransaksi'])) {
+			$url .= '&sorttransaksi=' . $this->request->get['sorttransaksi'];
+		}
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . $this->request->get['filter_name'];
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+		}
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+		}
+		
+		if (isset($this->request->get['filter_saldo'])) {
+			$url .= '&filter_saldo=' . $this->request->get['filter_saldo'];
+		}
+		if (isset($this->request->get['filter_ref'])) {
+			$url .= '&filter_ref=' . $this->request->get['filter_ref'];
+		}
+		if (isset($this->request->get['filter_keterangan'])) {
+			$url .= '&filter_keterangan=' . $this->request->get['filter_keterangan'];
+		}
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+
+		$next=$pagekartu+1;
+
+		$pagination = new Pagination();
+		$pagination->total = $order_total;
+		$pagination->page = $pagekartu;
+		$pagination->limit = $this->config->get('config_admin_limit');
+		$pagination->text = $this->language->get('text_pagination');
+		$pagination->url = $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url . '&pagekartu={page}', 'SSL');
+
+		$this->data['pagination'] = $pagination->render();
+
+		$this->data['jeniss']=$this->model_keuangan_bank->getTypeMutasi();
+
+		$this->data['filter_tgl_awal']=$filter_tgl_awal;
+		$this->data['filter_tgl_akhir']=$filter_tgl_akhir;
+		$this->data['filter_jenis']=$filter_jenis;
+		$this->data['filter_saldo']=$filter_saldo;
+		$this->data['filter_ref']=$filter_ref;
+		$this->data['filter_keterangan']=$filter_keterangan;
+		$this->template = 'keuangan/mutasi.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+
+		$this->response->setOutput($this->render());
+	}
+	*/
+	
+	public function inserttransaksi() {
+		$this->load->language('catalog/pembelian');
+		$this->load->model('keuangan/bank');
+		$bank_id=0;
+		if (isset($this->request->get['bank_id'])) {
+			$bank_id = $this->request->get['bank_id'];
+		} else {
+			$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+		}
+
+		$this->data['bank']=$this->model_keuangan_bank->getBank(array(),array(),array('id'=>$bank_id));
+		//$this->data['coa'] =$this->
+		if($this->user->getUsername()=="pawitx"){
+			echo "<pre>";print_r($this->data['bank']);exit;
+		}
+		$this->document->setTitle("Insert Transaksi Bank/Kas ".$bank['name']);
+
+		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateFormTransaksi()) {
+			if($this->user->getUsername()=="pawit"){
+				echo "<pre>";print_r($this->request->post);exit;
+			}
+			$this->model_keuangan_bank->addTransaksi($this->request->post);
+
+			$this->session->data['success'] = 'Sukses. Data transaksi berhasil disimpan.';
+
+			$url = '';
+
+			if (isset($this->request->get['bank_id'])) {
+				$url .= '&bank_id=' . $this->request->get['bank_id'];
+			}
+
+			$url = '';
+
+			if (isset($this->request->get['filter_name'])) {
+				$url .= '&filter_name=' . $this->request->get['filter_name'];
+			}
+
+			if (isset($this->request->get['page'])) {
+				$url .= '&page=' . $this->request->get['page'];
+			}
+
+			if (isset($this->request->get['filter_tgl_awal'])) {
+				$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+			}
+			if (isset($this->request->get['filter_tgl_akhir'])) {
+				$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+			}
+
+			if (isset($this->request->get['filter_jenis'])) {
+				$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+			}
+
+			$this->redirect($this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+		}
+
+    	$this->getFormTransaksi();
+  	}
+
+	public function getFormTransaksi() {
+		$this->load->model('keuangan/bank');
+
+		$this->data['heading_title'] = $this->language->get('Akun Bank');
+
+		if (isset($this->error['warning'])) {
+			$this->data['error_warning'] = $this->error['warning'];
+		} else {
+			$this->data['error_warning'] = '';
+		}
+
+		if (isset($this->error['tgl_transaksi'])) {
+			$this->data['error_tgl_transaksi'] = $this->error['tgl_transaksi'];
+		} else {
+			$this->data['error_tgl_transaksi'] = '';
+		}
+
+
+		if (isset($this->error['nominal'])) {
+			$this->data['error_nominal'] = $this->error['nominal'];
+		} else {
+			$this->data['error_nominal'] = '';
+		}
+
+		$url = '';
+
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+
+		if (!isset($this->request->get['bank_id'])) {
+			$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] , 'SSL'));
+		} else {
+			if(empty($this->request->get['bank_id'])){
+				$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] , 'SSL'));
+			}else{
+				$this->data['action'] = $this->url->link('keuangan/bank/inserttransaksi', 'token=' . $this->session->data['token'] . '&bank_id=' . $this->request->get['bank_id'] . $url, 'SSL');
+			}
+		}
+
+		$this->data['cancel'] = $this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] , 'SSL');
+		$this->data['banks']	= $this->model_keuangan_bank->getBanks();
+		$this->data['token'] = $this->session->data['token'];
+        
+        $locktanggal=$this->config->get('config_locktanggal');
+
+		if(!empty($locktanggal)){
+			$this->data['locktanggal']=$locktanggal;
+
+		}else{
+			$this->data['locktanggal']=date('Y-m-d');
+		}
+
+		$this->template = 'keuangan/input_transaksi.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+
+		$this->response->setOutput($this->render());
+  	}
+	private function validateFormTransaksi() {
+  	if (!$this->user->hasPermission('modify', 'keuangan/bank')) {
+    		$this->error['warning'] = $this->language->get('error_permission');
+  	}
+
+	   if(!is_numeric($this->request->post['nominal'])){
+          $this->error['nominal'] = $this->language->get('Nominal harus berupa angka');
+      }
+
+
+
+
+
+
+			if ($this->error && !isset($this->error['warning'])) {
+				$this->error['warning'] = $this->language->get('error_warning');
+			}
+
+			if (!$this->error) {
+		  		return true;
+			} else {
+		  		return false;
+			}
+  	}
+	public function autocomplete(){
+		$rests = array();
+
+		$this->load->model('keuangan/bank');
+
+			if (isset($this->request->get['q'])) {
+				$filter_name = $this->request->get['q'];
+			} else {
+				$filter_name = '';
+			}
+			if (isset($this->request->get['c'])) {
+				$currency = $this->request->get['c'];
+			} else {
+				$currency = '';
+			}
+
+
+			if (isset($this->request->get['limit'])) {
+				$limit = $this->request->get['limit'];
+			} else {
+				$limit = 20;
+			}
+
+			$data = array(
+				'name'         => array('LIKE',$filter_name),
+				'hapus'	=> array('<',1),
+				'currency'	=> $currency
+			);
+			$start=0;
+			$limit=0;
+			$column=array('id','name','rekening','pemilik');
+			$join=array();
+
+			$results = $this->model_keuangan_bank->getBanks($column,$join,$data,array(),$limit,$start);
+			foreach($results as $r){
+				$rests[]=array(
+					'id'	=> $r['id'],
+					'text'	=> $r['name']." Rek: ".$r['rekening']." an. ".$r['pemilik']
+				);
+			}
+		$this->response->setOutput(json_encode($rests));
+	}
+
+	public function editmutasi() {
+		$this->load->language('catalog/pembelian');
+		$this->load->model('keuangan/bank');
+
+		$url = '';
+
+	if (isset($this->request->get['filter_name'])) {
+		$url .= '&filter_name=' . $this->request->get['filter_name'];
+	}
+
+	if (isset($this->request->get['page'])) {
+		$url .= '&page=' . $this->request->get['page'];
+	}
+
+	if (isset($this->request->get['bank_id'])) {
+		$url .= '&bank_id=' . $this->request->get['bank_id'];
+	}
+	if (isset($this->request->get['pagekartu'])) {
+		$url .= '&pagekartu=' . $this->request->get['pagekartu'];
+	}
+
+
+	if (isset($this->request->get['filter_tgl_awal'])) {
+		$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+	}
+	if (isset($this->request->get['filter_tgl_akhir'])) {
+		$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+	}
+
+	if (isset($this->request->get['filter_jenis'])) {
+		$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+	}
+
+		if (isset($this->request->get['id'])) {
+			$id = $this->request->get['id'];
+		} else {
+			if(empty($this->request->get['id'])){
+				$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] , 'SSL'));
+			}else{
+				$this->data['action'] = $this->url->link('keuangan/bank/editmutasi', 'token=' . $this->session->data['token'] . '&bank_id=' . $this->request->get['bank_id'] . $url, 'SSL');
+			}
+		}
+
+		$mutasi=$this->model_keuangan_bank->getDetailSaldo($id);
+		$this->data['mutasi']=$mutasi;
+
+		$bank=$this->model_keuangan_bank->getBank(array(),array(),array('id'=>$mutasi['bank_id']));
+		$this->data['bank']=$bank;
+		$this->document->setTitle("Edit Mutasi ".$bank['name']);
+
+		if (($this->request->server['REQUEST_METHOD'] == 'POST') ) {
+			$this->model_keuangan_bank->editTransaksi($this->request->post,$this->request->get['id']);
+
+			$this->session->data['success'] = 'Sukses. Data transaksi berhasil diperbarui.';
+
+
+
+			$this->redirect($this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+		}
+		$this->data['cancel'] = $this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] , 'SSL');
+		$this->data['token'] = $this->session->data['token'];
+
+		$this->template = 'keuangan/editmutasi.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+		$this->response->setOutput($this->render());
+  	}
+
+		public function hapusmutasi() {
+			$this->load->language('catalog/pembelian');
+			$this->load->model('keuangan/bank');
+
+			$url = '';
+
+		if (isset($this->request->get['filter_name'])) {
+			$url .= '&filter_name=' . $this->request->get['filter_name'];
+		}
+
+		if (isset($this->request->get['page'])) {
+			$url .= '&page=' . $this->request->get['page'];
+		}
+
+		if (isset($this->request->get['bank_id'])) {
+			$url .= '&bank_id=' . $this->request->get['bank_id'];
+		}
+		$this->data['url'] = $this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url, 'SSL');
+
+		if (isset($this->request->get['pagekartu'])) {
+			$url .= '&pagekartu=' . $this->request->get['pagekartu'];
+		}
+
+
+		if (isset($this->request->get['filter_tgl_awal'])) {
+			$url .= '&filter_tgl_awal=' . $this->request->get['filter_tgl_awal'];
+		}
+		if (isset($this->request->get['filter_tgl_akhir'])) {
+			$url .= '&filter_tgl_akhir=' . $this->request->get['filter_tgl_akhir'];
+		}
+
+		if (isset($this->request->get['filter_jenis'])) {
+			$url .= '&filter_jenis=' . $this->request->get['filter_jenis'];
+		}
+
+			if (isset($this->request->get['id'])) {
+				$id = $this->request->get['id'];
+			} else {
+				if(empty($this->request->get['id'])){
+					$this->redirect($this->url->link('keuangan/bank', 'token=' . $this->session->data['token'] , 'SSL'));
+				}
+			}
+
+			$this->model_keuangan_bank->hapusTransaksi(array('id'=>$this->request->get['id']));
+			$this->session->data['success'] = 'Sukses. Data transaksi berhasil dihapus.';
+			$this->redirect($this->url->link('keuangan/bank/mutasi', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+
+	  	}
+
+
+
+
+}
+?>

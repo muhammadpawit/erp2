@@ -1,0 +1,261 @@
+<?php
+class ModelKeuanganJurnal extends Model {
+  public function addJurnalUmumManual($data){
+    $details[]=array(
+      'ref_akun'  => $data['ref_debet'],
+      'debet' => $data['nominal'],
+      'keterangan'  => $data['keterangan'],
+      'kredit'  => 0,
+      'urutan'=> 1
+    );
+    $details[]=array(
+      'ref_akun'  => $data['ref_kredit'],
+      'kredit' => $data['nominal'],
+      'keterangan'  => $data['keterangan'],
+      'debet'  => 0,
+      'urutan'=> 2
+    );
+    $j=array(
+      'tanggal' => $data['tanggal'],
+      'keterangan'  => $data['keterangan'],
+      'hapus' => 0,
+      'ref' => !empty($data['referensi'])?$data['referensi']:0,
+      'type'  => 999,
+      'details' => $details
+    );
+
+    $this->addJurnalUmum($j);
+  }
+  public function addJurnalUmum($data){
+    $j=array(
+      'tanggal' => $data['tanggal'],
+      'keterangan'  => $this->db->escape($data['keterangan']),
+      'hapus' => 0,
+      'ref' => $data['ref'],
+      'type'  => $data['type']
+    );
+    $this->db->insert('jurnal_umum',$j);
+    $id=$this->db->getLastId();
+
+    foreach($data['details'] as $d){
+      $this->addJurnalUmumDetail($id,$d);
+    }
+  }
+  public function addJurnalUmumDetail($jurnal_id,$data){
+    $jd=array(
+      'jurnal_id'=> $jurnal_id,
+      'ref_akun'  => $data['ref_akun'],
+      'keterangan'  => $this->db->escape($data['keterangan']),
+      'debet' => $data['debet'],
+      'kredit'  => $data['kredit'],
+      'urutan'  => $data['urutan'],
+      'hapus' => 0
+    );
+    $this->db->insert('jurnal_umum_detail',$jd);
+  }
+  public function jurnalUmum($data=array()){
+    $sql="SELECT DISTINCT(ju.*) FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    if(!empty($data['filter_jenis'])){
+        $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+    }
+
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+
+    $sql .=" ORDER BY tanggal DESC,id DESC ";
+
+    if (isset($data['start']) || isset($data['limit'])) {
+      if ($data['start'] < 0) {
+        $data['start'] = 0;
+      }
+
+      if ($data['limit'] < 1) {
+        $data['limit'] = 20;
+      }
+
+      $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+    }
+
+    $query = $this->db->query($sql);
+    return $query->rows;
+  }
+
+  public function totalJurnalUmum($data=array()){
+    $sql="SELECT COUNT(DISTINCT(ju.*)) as total FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+
+    if(!empty($data['filter_jenis'])){
+        $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+    }
+
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+
+    $query = $this->db->query($sql);
+    return $query->row['total'];
+  }
+  public function getJurnalUmum($where){
+    return $this->db->first('jurnal_umum',$where);
+  }
+
+  public function editJurnalUmumManual($data,$id){
+    $this->db->update('jurnal_umum',array('tanggal'=>$data['tanggal']),array('id'=>$id));
+    foreach($data['detail'] as $d){
+      $det=array(
+        'ref_akun'  => $d['ref_akun'],
+        'debet' => $d['debet'],
+        'kredit'  => $d['kredit'],
+        'urutan'  => $d['urutan']
+      );
+      $this->db->update('jurnal_umum_detail',$det,array('id'=>$d['id'],'jurnal_id'=>$id));
+    }
+  }
+
+  public function hapusJurnal($id){
+    $this->db->delete('jurnal_umum',array('id'=>$id));
+    $this->db->delete('jurnal_umum_detail',array('jurnal_id'=>$id));
+  }
+
+  public function getDetailJurnalUmum($jurnal_id,$filter_jenis){
+    $join=array();
+    $join[]=array(
+      'tablename' => 'coamnb',
+      'firsttable'  => 'jurnal_umum_detail.ref_akun',
+      'secondtable' => 'coamnb.kode_rek'
+    );
+    return $this->db->alljoins('jurnal_umum_detail',array('jurnal_umum_detail.id','jurnal_umum_detail.jurnal_id','jurnal_umum_detail.ref_akun','jurnal_umum_detail.debet','jurnal_umum_detail.kredit','jurnal_umum_detail.hapus','jurnal_umum_detail.urutan','coamnb.name as keterangan'),array(),$join,array('jurnal_umum_detail.hapus'=> array('<',1),'jurnal_id' => $jurnal_id,'ref_akun'=>$filter_jenis),array('urutan'=>'ASC'));
+  }
+
+  public function jurnalPengeluaranKas($data=array()){
+    //ambil di aruskas yg typenya 1 dan 2
+    //lihat nilai referensinya
+    //di referensi ambil nilai pajak, diskon, subtotal
+    //debet -> sub total dan pajak jika pajak > 0 kredit totalnya dan diskon
+    $sql="SELECT * FROM aruskas WHERE hapus = 0 AND saldokeluar > 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND date_added >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND date_added <= '".$data['filter_date_end']."'";
+    }
+
+    if (isset($data['start']) || isset($data['limit'])) {
+      if ($data['start'] < 0) {
+        $data['start'] = 0;
+      }
+
+      if ($data['limit'] < 1) {
+        $data['limit'] = 20;
+      }
+
+      $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+    }
+
+    $query = $this->db->query($sql);
+    return $query->rows;
+
+  }
+  public function totalPengeluaranKas($data=array()){
+    $sql="SELECT COUNT(*) as total FROM aruskas WHERE hapus = 0 AND saldokeluar > 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND date_added >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND date_added <= '".$data['filter_date_end']."'";
+    }
+
+
+
+    $query = $this->db->query($sql);
+    return $query->row['total'];
+  }
+
+  public function updateJurnalumum($data,$where){
+    $this->db->update('jurnal_umum',$data,$where);
+  }
+  public function updateJurnalUmumDetail($data,$where){
+    $this->db->update('jurnal_umum_detail',$data,$where);
+  }
+  public function totalAkun($ref_akun,$data){
+    $sql="SELECT COALESCE(SUM(debet),0) as totaldebet,COALESCE(SUM(kredit),0) as totalkredit FROM jurnal_umum_detail jd JOIN jurnal_umum ju ON(jd.jurnal_id=ju.id) WHERE ju.hapus=0 AND jd.hapus=0 AND jd.ref_akun='".$ref_akun."'";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    $result=$this->db->query($sql);
+
+    /*if($ref_akun < 2000){
+      $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    }else{
+      $hasil=$result->row['totalkredit'] - $result->row['totaldebet'];
+    }*/
+    $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    return $hasil;
+  }
+  public function totalDebet($ref_akun,$data=array()){
+    $sql="SELECT COALESCE(SUM(debet),0) as totaldebet FROM jurnal_umum_detail jd JOIN jurnal_umum ju ON(jd.jurnal_id=ju.id) WHERE ju.hapus=0 AND jd.hapus=0 ";
+    if(!empty($ref_akun)){
+      $sql .=" AND jd.ref_akun='".$ref_akun."'";
+    }
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+    $result=$this->db->query($sql);
+
+    /*if($ref_akun < 2000){
+      $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    }else{
+      $hasil=$result->row['totalkredit'] - $result->row['totaldebet'];
+    }*/
+    //$hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    return $result->row['totaldebet'];
+  }
+  public function totalKredit($ref_akun,$data=array()){
+    $sql="SELECT COALESCE(SUM(kredit),0) as totalkredit FROM jurnal_umum_detail jd JOIN jurnal_umum ju ON(jd.jurnal_id=ju.id) WHERE ju.hapus=0 AND jd.hapus=0 ";
+    if(!empty($ref_akun)){
+      $sql .=" AND jd.ref_akun='".$ref_akun."'";
+    }
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+    $result=$this->db->query($sql);
+
+    /*if($ref_akun < 2000){
+      $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    }else{
+      $hasil=$result->row['totalkredit'] - $result->row['totaldebet'];
+    }*/
+    $this->log->write('Hasil ' . $sql);
+    //$hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    return $result->row['totalkredit'];
+  }
+
+
+}

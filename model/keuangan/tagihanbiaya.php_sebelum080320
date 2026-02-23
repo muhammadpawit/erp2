@@ -1,0 +1,276 @@
+<?php
+class ModelKeuanganTagihanbiaya extends Model {
+  public function addPembelian($data){
+    /*
+    Status
+    1 belum dibayar
+    2 dibayar sebagian
+    3 lunas
+    4 dibatalkan
+    */
+    if(empty($data['nilaipajak'])){
+      $data['nilaipajak']=0;
+    }
+    if(empty($data['nominal'])){
+      $data['nominal']=0;
+    }
+    if(empty($data['tgl_tagihan'])){
+      $data['tgl_tagihan']=date('Y-m-d');
+    }
+    if(empty($data['jatuhtempo'])){
+      $data['jatuhtempo']=date('Y-m-d');
+    }
+    $total=$data['nominal'];
+    if($data['statuspajak'] == 2){ // tidak potong total    
+      $total=$data['nominal'];
+    }else if($data['statuspajak'] == 1){ // potong total
+      $total=$total-$data['nilaipajak'];
+    }
+
+    if($this->user->getUsername()=="pawit"){
+      $ar=array(
+        'data' => $data,
+        'statuspajak' =>$data['statuspajak'],
+        'total' =>$total,
+      );
+      echo "<pre>";print_r($ar);
+      exit;
+    }  
+
+    if($data['pajakdimuka'] > 0){
+      if($data['statuspajakdimuka'] == 2){
+        $total=$total+$data['ppn'];
+      }
+    }
+    if($data['jenisbiaya'] == 1){
+      $refakun=$data['akun_biaya'];
+      $refhutang='2202';
+    }
+  
+    if($data['jenisbiaya'] == 2){
+      $this->load->model('keuangan/iklanperiodik');
+      $redf=$this->model_keuangan_iklanperiodik->getPermintaanPembelian(array(),array(),array('id'=>$data['ref']));
+
+      if($redf['jenisbiaya'] == 2){
+        $refakun='1304';
+        $refhutang='2399';
+        $data['akun_biaya']='6220';
+
+      }
+
+      if($redf['jenisbiaya'] == 1){
+        $refakun='1301';
+        $refhutang='2399';
+        $data['akun_biaya']='6217';
+      }
+
+      if($redf['jenisbiaya'] == 3){
+        $refakun='1399';
+        $refhutang='2303';
+        $data['akun_biaya']='6261';
+      }
+
+      if($redf['jenisbiaya'] == 4){
+        $refakun='1302';
+        $refhutang='2399';
+        $data['akun_biaya']='6262';
+      }
+      if($redf['jenisbiaya'] == 6){
+        $refakun='6299';
+        $refhutang='2399';
+        $data['akun_biaya']='6299';
+      }
+      if($redf['jenisbiaya'] == 7){
+        $refakun='6299';
+        $refhutang='2399';
+        $data['akun_biaya']='6299';
+      }
+    }
+
+    if($data['jenisbiaya'] == 3){
+      $refakun='6211';
+      $refhutang='2302';
+      $data['akun_biaya']='6211';
+    }
+    if($data['jenisbiaya'] == 4){
+      $refakun='6212';
+      $refhutang='2302';
+      $data['akun_biaya']='6212';
+    }
+    if($data['jenisbiaya'] == 5){
+      $this->load->model('catalog/aset');
+      $pemeliharaan=$this->model_catalog_aset->getPemeliharaan(array('id'=>$data['refaset']));
+
+      $refakun=$pemeliharaan['akun'];
+      $data['akun_biaya']=$pemeliharaan['akun'];
+      $refhutang='2202';
+    }
+
+    $p=array(
+      'date_added' => date('Y-m-d H:i:s'),
+      'nominal'  => $data['nominal'],
+      'no_faktur'  => $data['no_faktur'],
+      'pajak'  => $data['pajak'],
+      'nilaipajak'  => $data['nilaipajak'],
+      'tgl_tagihan'  => $data['tgl_tagihan'],
+      'jatuhtempo'  => $data['jatuhtempo'],
+      'total'  => $total,
+      'totalbayar'  => 0,
+      'status'  => 1,
+      'keterangan'  => $this->db->escape($data['keterangan']),
+      'user_id' => $this->user->getId(),
+      'akun_hutang' => $refhutang,
+      'akun_biaya' => $data['akun_biaya'],
+      'jenisbiaya' => $data['jenisbiaya'],
+      'ref' => empty($data['ref'])?0:$data['ref'],
+      'refaset' => empty($data['refaset'])?0:$data['refaset'],
+      'akun_biayadimuka'  => 0,
+      'statuspajak' => $data['statuspajak'],
+      'statuspajakdimuka' => $data['statuspajakdimuka'],
+      'pajakdimuka' =>$data['pajakdimuka'],
+      'ppn' => empty($data['ppn'])?0:$data['ppn'],
+      'masaberlaku' => 1,
+      'berulang'  => 0
+    );
+
+    $this->db->insert('tagihan_biaya',$p);
+    $id=$this->db->getLastId();
+    $this->load->model('keuangan/jurnal');
+    $jurnal=array();
+    $detail=array();
+    if($data['nominal'] > 0){
+      /*if( $data['akun_biaya'] =='6201' OR $data['akun_biaya']=='6230' OR $data['akun_biaya']=='6229'){
+        $detail[]=array(
+          'ref_akun'  =>$refakun,
+          'keterangan'  => $this->db->escape($data['keterangan']),
+          'debet' => $data['nominal'],
+          'kredit'  => 0,
+          'urutan'  => 1,
+        );
+        $detail[]=array(
+          'ref_akun'  => $refhutang,
+          'keterangan'  => $this->db->escape($data['keterangan']),
+          'kredit' => $total,
+          'debet'  => 0,
+          'urutan'  => 3,
+        );
+      }else{*/
+        if($data['pajakdimuka'] > 0){
+          if($data['statuspajakdimuka'] == 1){
+            $data['nominal'] = $data['nominal'] - $data['ppn'];
+          }
+        }
+        if($data['statuspajak'] == 2){
+          $detail[]=array(
+            'ref_akun'  =>$refakun,
+            'keterangan'  => $this->db->escape($data['keterangan']),
+            'debet' => $data['nominal']+$data['nilaipajak'],
+            'kredit'  => 0,
+            'urutan'  => 1,
+          );
+        }else{
+          $detail[]=array(
+            'ref_akun'  =>$refakun,
+            'keterangan'  => $this->db->escape($data['keterangan']),
+            'debet' => $data['nominal'],
+            'kredit'  => 0,
+            'urutan'  => 1,
+          );
+        }
+        if($data['pajakdimuka'] > 0){
+            if($data['ppn'] > 0){
+              $detail[]=array(
+                'ref_akun'  =>$data['pajakdimuka'],
+                'keterangan'  => $this->db->escape($data['keterangan']),
+                'debet' => $data['ppn'],
+                'kredit'  => 0,
+                'urutan'  => 2,
+              );
+            }
+        }
+  
+          $detail[]=array(
+            'ref_akun'  => $refhutang,
+            'keterangan'  => $this->db->escape($data['keterangan']),
+            'kredit' => $total,
+            'debet'  => 0,
+            'urutan'  => 3,
+          );
+  
+        if($data['nilaipajak'] > 0){
+          $detail[]=array(
+            'ref_akun'  => $data['pajak'],
+            'keterangan'  => $this->db->escape('Hutang Pajak'),
+            'kredit' => $data['nilaipajak'],
+            'debet'  => 0,
+            'urutan'  => 3,
+          );
+        }
+      //}
+      
+
+      $jurnal=array(
+        'tanggal' => $data['tgl_tagihan'],
+        'keterangan'  => 'Tagihan Biaya '.$data['keterangan'],
+        'hapus' => 0,
+        'ref' => $id,
+        'type'  => 30,
+        'linkterkait' => $data['no_faktur'],
+        'details'  => $detail
+      );
+      $this->model_keuangan_jurnal->addJurnalUmum($jurnal);
+    }
+
+    if($data['tunai']){
+      if(!empty($data['bank_id'])){
+        $this->load->model('keuangan/pembayarantagihan');
+        $p=array(
+          'order_id' => $id,
+          'nominal'  => $total,
+          'tgl_bayar'  => $data['tgl_tagihan'],
+          'status'  => 1,
+          'keterangan'  => $this->db->escape('Pembayaran tagihan biaya '.$data['keterangan']),
+          'linkterkait' => $data['no_faktur'],
+          'bank_id' => $data['bank_id']
+        );
+        $this->load->model_keuangan_pembayarantagihan->addPembelian($p);
+      }
+    }
+
+
+  }
+
+  public function updatePermintaan($data,$where){
+    if($data['status'] == 4){
+      $pb=$this->getPermintaanPembelian(array(),array(),$where);
+      if($pb['status'] == 1){
+        //$this->db->delete('jurnal_umum',array('type'=>30,'ref'=>$pb['id']));
+        $this->load->model('keuangan/jurnal');
+        $ju=$this->model_keuangan_jurnal->getJurnalUmum(array('ref'=>$pb['id'],'type'=>30));
+        if(!empty($ju['id'])){
+          $this->db->delete('jurnal_umum_detail',array('jurnal_id' => $ju['id']));
+          $this->db->delete('jurnal_umum',array('id'=>$ju['id']));
+        }
+      }
+
+    }
+    $this->db->update('tagihan_biaya',$data,$where);
+  }
+  public function getPermintaanPembelians($column=array(),$join=array(),$where=array(),$order=array(),$limit=0,$offset=null){
+    return $this->db->alljoin('tagihan_biaya',$column,$join,$where,$order,$limit,$offset);
+  }
+
+  public function totalPermintaans($where){
+    return $this->db->countAll('tagihan_biaya',$where);
+  }
+  public function totalDp($no_po){
+    return $this->db->firstdetail('tagihan_biaya',array('COALESCE(SUM(total)) as total'),array(),array('id' => $no_po),array());
+  }
+
+  public function getPermintaanPembelian($column=array(),$join=array(),$where=array()){
+    return $this->db->firstdetail('tagihan_biaya',$column,$join,$where,array());
+  }
+
+
+}
+?>

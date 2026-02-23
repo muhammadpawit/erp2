@@ -1,0 +1,1194 @@
+<?php
+class ModelKeuanganJurnal extends Model {
+  // baru 28 Januari 2019
+  public function getsaldoawalcoa($akun,$tahun){
+    $d = $this->db->query("SELECT debet FROM saldoawalcoa WHERE kode_rek='$akun' and tahun='$tahun' ");
+    return $d->row['debet'];
+  }
+  // baru 27 Januari 2019
+  public function jurnalUmumBukuBesarnew($data=array()){
+    $sql="SELECT DISTINCT(ju.*) FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    if(!empty($data['filter_jenis'])){
+        if(is_array($data['filter_jenis'])){
+          //$arr=implode(",",$data['filter_jenis']);
+          $arr='';
+          foreach($data['filter_jenis'] as $f){
+            $arr .="'".$f."'";
+            if($f != end($data['filter_jenis'])){
+              $arr .=",";
+            }
+          }
+          $sql .=" AND jd.ref_akun IN (".$arr.")";
+        }else{
+          $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }
+    }
+
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+
+    $sql .=" ORDER BY tanggal DESC,id DESC ";
+
+    if (isset($data['start']) || isset($data['limit'])) {
+      if ($data['start'] < 0) {
+        $data['start'] = 0;
+      }
+
+      if ($data['limit'] < 1) {
+        $data['limit'] = 20;
+      }
+
+      $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+    }
+
+    $query = $this->db->query($sql);
+    return $query->rows;
+  }
+  public function getDetailJurnalUmumBukuBesarnew($jurnal_id,$filter_jenis){
+    $join=array();
+    $join[]=array(
+      'tablename' => 'coamnb',
+      'firsttable'  => 'jurnal_umum_detail.ref_akun',
+      'secondtable' => 'coamnb.kode_rek'
+    );
+    if(is_array($filter_jenis)){
+      if(!empty($filter_jenis)){
+        $arr='';
+        foreach($filter_jenis as $f){
+          $arr .="'".$f."'";
+          if($f != end($filter_jenis)){
+            $arr .=",";
+          }
+        }
+        //$sql .=" AND jd.ref_akun IN (".$arr.")";
+        $filter_jenis=array("IN",$arr);
+      }
+    }
+    return $this->db->alljoins('jurnal_umum_detail',array('jurnal_umum_detail.id','jurnal_umum_detail.jurnal_id','jurnal_umum_detail.ref_akun','jurnal_umum_detail.debet','jurnal_umum_detail.kredit','jurnal_umum_detail.hapus','jurnal_umum_detail.urutan','coamnb.name as keterangan'),array(),$join,array('jurnal_umum_detail.hapus'=> array('<',1),'jurnal_id' => $jurnal_id,'ref_akun'=>$filter_jenis),array('urutan'=>'DESC'));
+  }
+  // end baru
+	// baru 11 Oktober 2019
+	public function dpph($data){
+		
+		$sql =" SELECT ju.tanggal,ju.keterangan,jud.ref_akun,jud.kredit FROM jurnal_umum ju JOIN jurnal_umum_detail jud ON (jud.jurnal_id=ju.id) WHERE ju.hapus=0 AND jud.kredit>0";
+		if(!empty($data['filter_jenis'])){
+			$sql .=" AND jud.ref_akun='".$data['filter_jenis']."'";
+		}else{
+			$sql .=" AND jud.ref_akun IN ('1551','1552','1553','1554','2501','2502','2503','2504','2506','2507')";
+		}
+		if(!empty($data['filter_date_start'])){
+			$sql .=" AND ju.tanggal BETWEEN '".$data['filter_date_start']."' AND '".$data['filter_date_end']."' ";
+		}else{
+			$sql .=" AND ju.tanggal BETWEEN '".date('Y-md',strtotime('firts day of this month'))."' AND '".date('Y-md',strtotime('last day of this month'))."' ";
+		}
+		$sql .=" ORDER BY ju.tanggal DESC ";
+		if (isset($data['start']) || isset($data['limit'])) {
+		  if ($data['start'] < 0) {
+			$data['start'] = 0;
+		  }
+
+		  if ($data['limit'] < 1) {
+			$data['limit'] = 20;
+		  }
+
+		  $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+		}
+		$d = $this->db->query($sql);
+		return $d->rows;
+		//return $sql;
+	}
+	
+	public function totalnominaldpph($data){
+		
+		$sql =" SELECT count(*) as transaksi ,sum(jud.kredit) as total FROM jurnal_umum ju JOIN jurnal_umum_detail jud ON (jud.jurnal_id=ju.id) WHERE ju.hapus=0 AND jud.kredit>0";
+		if(!empty($data['filter_jenis'])){
+			$sql .=" AND jud.ref_akun='".$data['filter_jenis']."'";
+		}else{
+			$sql .=" AND jud.ref_akun IN ('1551','1552','1553','1554','2501','2502','2503','2504','2506','2507')";
+		}
+		if(!empty($data['filter_date_start'])){
+			$sql .=" AND ju.tanggal BETWEEN '".$data['filter_date_start']."' AND '".$data['filter_date_end']."' ";
+		}else{
+			$sql .=" AND ju.tanggal BETWEEN '".date('Y-md',strtotime('firts day of this month'))."' AND '".date('Y-md',strtotime('last day of this month'))."' ";
+		}
+		$d = $this->db->query($sql);
+		return $d->row;
+		//return $sql;
+	}
+	
+	public function getnamacoa($id){
+		$sql ="SELECT name from coamnb where kode_rek='$id' ";
+		$d = $this->db->query($sql);
+		return $d->row['name'];
+	}
+	
+	
+	
+	// end baru
+  public function addJurnalUmumManual($data){
+	$linkterkait =null;
+  	if(isset($data['linkterkait'])){
+  		$linkterkait=$data['linkterkait'];
+  	}
+    $details[]=array(
+      'ref_akun'  => $data['ref_debet'],
+      'debet' => $data['nominal'],
+      'keterangan'  => $data['keterangan'],
+      'kredit'  => 0,
+      'urutan'=> 1
+    );
+    $details[]=array(
+      'ref_akun'  => $data['ref_kredit'],
+      'kredit' => $data['nominal'],
+      'keterangan'  => $data['keterangan'],
+      'debet'  => 0,
+      'urutan'=> 2
+    );
+    $j=array(
+      'tanggal' => $data['tanggal'],
+      'keterangan'  => $data['keterangan'],
+      'hapus' => 0,
+      'ref' => !empty($data['referensi'])?$data['referensi']:0,
+	  'linkterkait' => $linkterkait,
+      'type'  => 999,
+      'details' => $details
+    );
+
+    $this->addJurnalUmum($j);
+  }
+  public function addJurnalUmum($data){
+	$linkterkait =null;
+  	if(isset($data['linkterkait'])){
+  		$linkterkait=$data['linkterkait'];
+  	}
+    $j=array(
+      'tanggal' => $data['tanggal'],
+      'keterangan'  => $this->db->escape($data['keterangan']),
+      'hapus' => 0,
+      'ref' => $data['ref'],
+	  'linkterkait' => $linkterkait,
+      'type'  => $data['type']
+    );
+    $this->db->insert('jurnal_umum',$j);
+    $id=$this->db->getLastId();
+
+    foreach($data['details'] as $d){
+      $this->addJurnalUmumDetail($id,$d);
+    }
+  }
+  public function addJurnalUmumDetail($jurnal_id,$data){
+    $jd=array(
+      'jurnal_id'=> $jurnal_id,
+      'ref_akun'  => $data['ref_akun'],
+      'keterangan'  => $this->db->escape($data['keterangan']),
+      'debet' => $data['debet'],
+      'kredit'  => $data['kredit'],
+      'urutan'  => $data['urutan'],
+      'hapus' => 0
+    );
+    $this->db->insert('jurnal_umum_detail',$jd);
+  }
+    public function jurnalUmumBukuBesar($data=array()){
+    $sql="SELECT DISTINCT(ju.*) FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    if(!empty($data['filter_jenis'])){
+        if(is_array($data['filter_jenis'])){
+          //$arr=implode(",",$data['filter_jenis']);
+          $arr='';
+          foreach($data['filter_jenis'] as $f){
+            $arr .="'".$f."'";
+            if($f != end($data['filter_jenis'])){
+              $arr .=",";
+            }
+          }
+          $sql .=" AND jd.ref_akun IN (".$arr.")";
+        }else{
+          $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }
+    }
+
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+
+    $sql .=" ORDER BY tanggal DESC,id DESC ";
+
+    if (isset($data['start']) || isset($data['limit'])) {
+      if ($data['start'] < 0) {
+        $data['start'] = 0;
+      }
+
+      if ($data['limit'] < 1) {
+        $data['limit'] = 20;
+      }
+
+      $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+    }
+
+    $query = $this->db->query($sql);
+    return $query->rows;
+  }
+  
+  public function getDetailJurnalUmumBukuBesar($jurnal_id,$filter_jenis){
+    $join=array();
+    $join[]=array(
+      'tablename' => 'coamnb',
+      'firsttable'  => 'jurnal_umum_detail.ref_akun',
+      'secondtable' => 'coamnb.kode_rek'
+    );
+    if(is_array($filter_jenis)){
+      if(!empty($filter_jenis)){
+        $arr='';
+        foreach($filter_jenis as $f){
+          $arr .="'".$f."'";
+          if($f != end($filter_jenis)){
+            $arr .=",";
+          }
+        }
+        //$sql .=" AND jd.ref_akun IN (".$arr.")";
+        $filter_jenis=array("IN",$arr);
+      }
+    }
+    return $this->db->alljoins('jurnal_umum_detail',array('jurnal_umum_detail.id','jurnal_umum_detail.jurnal_id','jurnal_umum_detail.ref_akun','jurnal_umum_detail.debet','jurnal_umum_detail.kredit','jurnal_umum_detail.hapus','jurnal_umum_detail.urutan','coamnb.name as keterangan'),array(),$join,array('jurnal_umum_detail.hapus'=> array('<',1),'jurnal_id' => $jurnal_id,'ref_akun'=>$filter_jenis),array('urutan'=>'ASC'));
+  }
+  
+  public function jurnalUmum($data=array()){
+    $sql="SELECT DISTINCT(ju.*) FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+	/*else{
+		$sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+	}*/
+	
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+	
+	if(!empty($data['filter_keterangan'])){
+        //$sql .=" AND lower(jd.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' OR lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+		$sql .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+    }
+	/*else
+	{
+		$sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+	}
+    if(!empty($data['filter_jenis'])){
+        /*if(is_array($data['filter_jenis'])){
+          //$arr=implode(",",$data['filter_jenis']);
+          $arr='';
+          foreach($data['filter_jenis'] as $f){
+            $arr .="'".$f."'";
+            if($f != end($data['filter_jenis'])){
+              $arr .=",";
+            }
+          }
+          //$sql .=" AND jd.ref_akun IN (".$arr.")";
+		  $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }else{
+          $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }
+		$sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+    }
+	else{
+		//$sql .=" AND jd.ref_akun in ('1551','1552','1553','1554','2501','2502','2503','2504') ";
+		$sql .=" AND jd.ref_akun='2502'";
+	}
+	if(!empty($data['filter_jenis'])){
+        if(is_array($data['filter_jenis'])){
+          //$arr=implode(",",$data['filter_jenis']);
+          $arr='';
+          foreach($data['filter_jenis'] as $f){
+            $arr .="'".$f."'";
+            if($f != end($data['filter_jenis'])){
+              $arr .=",";
+            }
+          }
+          $sql .=" AND jd.ref_akun IN (".$arr.")";
+        }else{
+          $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }
+    }*/
+	
+	if(!empty($data['filter_jenis'])){
+        if(is_array($data['filter_jenis'])){
+          //$arr=implode(",",$data['filter_jenis']);
+          $arr='';
+          foreach($data['filter_jenis'] as $f){
+            $arr .="'".$f."'";
+            if($f != end($data['filter_jenis'])){
+              $arr .=",";
+            }
+          }
+          $sql .=" AND jd.ref_akun IN (".$arr.")";
+        }else{
+          $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }
+    }
+
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+
+    $sql .=" ORDER BY tanggal DESC,id DESC ";
+
+    if (isset($data['start']) || isset($data['limit'])) {
+      if ($data['start'] < 0) {
+        $data['start'] = 0;
+      }
+
+      if ($data['limit'] < 1) {
+        $data['limit'] = 20;
+      }
+
+      $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+    }
+
+    $query = $this->db->query($sql);
+    $datas = $query->rows;
+	$i=0;
+	$j=0;
+	if(isset($data['balance'])){
+		if($data['balance']==1){
+			//$sqls=" select ju.keterangan,ju.ref,ju.type,ju.tanggal,jurnal_id, round(sum(debet)) as totaldebet, round(sum(kredit)) as totalkredit, COALESCE(round(sum(debet))-round(sum(kredit))) as selisih from jurnal_umum_detail left join jurnal_umum ju on (ju.id=jurnal_umum_detail.jurnal_id) WHERE jurnal_id > 0 ";
+			$sqls=" select ju.keterangan,ju.ref,ju.type,ju.tanggal,jurnal_id, round(sum(debet)) as totaldebet, round(sum(kredit)) as totalkredit, COALESCE(round(sum(debet))-round(sum(kredit))) as selisih from jurnal_umum_detail left join jurnal_umum ju on (ju.id=jurnal_umum_detail.jurnal_id) WHERE jurnal_id > 0 and ju.hapus=0 ";
+			//$sqls .=" GROUP BY jurnal_umum.ref,jurnal_umum.type,jurnal_id ,jurnal_umum.keterangan,jurnal_umum.tanggal order by jurnal_id DESC ";
+			
+			if(!empty($data['filter_date_start'])){
+				$sqls .=" AND ju.tanggal between '".$data['filter_date_start']."' AND '".$data['filter_date_end']."'";
+			}
+				if(!empty($data['filter_date_end'])){
+				//$sqls .=" AND ju.tanggal <= '".$data['filter_date_end']."'";
+			}
+			if(!empty($data['filter_keterangan'])){
+				//$sqls .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' OR lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+				$sqls .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+			}
+			
+			if(!empty($data['filter_jenis'])){
+				if(is_array($data['filter_jenis'])){
+				  //$arr=implode(",",$data['filter_jenis']);
+				  $arr='';
+				  foreach($data['filter_jenis'] as $f){
+					$arr .="'".$f."'";
+					if($f != end($data['filter_jenis'])){
+					  $arr .=",";
+					}
+				  }
+				  $sqls .=" AND ref_akun IN (".$arr.")";
+				}else{
+				  $sqls .=" AND ref_akun='".$data['filter_jenis']."' ";
+				}
+			}
+
+			if($data['filter_ref'] != null){
+				$sqls .=" AND ref='".$data['filter_ref']."' ";
+			}
+			
+			$sqls.=" group by jurnal_id, ju.keterangan,ju.ref,ju.type,ju.tanggal order by ju.tanggal desc ";
+	
+			if (isset($data['start']) || isset($data['limit'])) {
+			  if ($data['start'] < 0) {
+				$data['start'] = 0;
+			  }
+
+			  if ($data['limit'] < 1) {
+				$data['limit'] = 20;
+			  }
+				if($this->user->getUsername()=="pawit"){
+					//$sqls .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];	
+				}
+			}
+				$querys = $this->db->query($sqls);
+				//$hasil = $query->rows;
+				foreach($querys->rows as $d ){
+					if($d['selisih']<>0){
+						$hasil[] = array(
+						'keterangan' => $d['keterangan'],
+						'id' => $d['jurnal_id'],
+						'ref'    => $d['ref'],
+						'type'   => $d['type'],
+						'tanggal' => $d['tanggal'],
+						'selisih' => $d['selisih'],
+						'totaldebet' => $d['totaldebet'],
+						'totalkredit' => $d['totalkredit'],
+						);
+					}
+				}
+				if($this->user->getUsername()=="pawits"){
+					echo "<pre>";print_r(count($hasil));exit;
+					}else{
+					return $hasil;
+				}
+		}else{
+			$sqls=" select ju.keterangan,ju.ref,ju.type,ju.tanggal,jurnal_id, sum(debet) as totaldebet, sum(kredit) as totalkredit, sum(debet-kredit) as selisih from jurnal_umum_detail left join jurnal_umum ju on (ju.id=jurnal_umum_detail.jurnal_id) WHERE jurnal_id > 0 ";
+			//$sqls .=" GROUP BY jurnal_umum.ref,jurnal_umum.type,jurnal_id ,jurnal_umum.keterangan,jurnal_umum.tanggal order by jurnal_id DESC ";
+			
+			if(!empty($data['filter_date_start'])){
+				$sqls .=" AND ju.tanggal >= '".$data['filter_date_start']."'";
+			}
+				if(!empty($data['filter_date_end'])){
+				$sqls .=" AND ju.tanggal <= '".$data['filter_date_end']."'";
+			}
+			if(!empty($data['filter_keterangan'])){
+				//$sqls .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' OR lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+				$sqls .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+			}
+			
+			if(!empty($data['filter_jenis'])){
+				if(is_array($data['filter_jenis'])){
+				  //$arr=implode(",",$data['filter_jenis']);
+				  $arr='';
+				  foreach($data['filter_jenis'] as $f){
+					$arr .="'".$f."'";
+					if($f != end($data['filter_jenis'])){
+					  $arr .=",";
+					}
+				  }
+				  $sqls .=" AND ref_akun IN (".$arr.")";
+				}else{
+				  $sqls .=" AND ref_akun='".$data['filter_jenis']."' ";
+				}
+			}
+
+			if($data['filter_ref'] != null){
+				$sqls .=" AND ref_akun='".$data['filter_ref']."' ";
+			}
+			
+			$sqls.=" group by jurnal_id, ju.keterangan,ju.ref,ju.type,ju.tanggal order by ju.tanggal desc ";
+	
+			if (isset($data['start']) || isset($data['limit'])) {
+			  if ($data['start'] < 0) {
+				$data['start'] = 0;
+			  }
+
+			  if ($data['limit'] < 1) {
+				$data['limit'] = 20;
+			  }
+
+			  //$sqls .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+			}
+				$querys = $this->db->query($sqls);
+			foreach($querys->rows as $d ){
+					if($d['selisih']==0){
+						$hasils[] = array(
+						'keterangan' => $d['keterangan'],
+						'id' => $d['jurnal_id'],
+						'ref'    => $d['ref'],
+						'type'   => $d['type'],
+						'tanggal' => $d['tanggal'],
+						);
+					}
+				}
+			return $hasils;
+		}
+		
+	}else{
+		if($this->user->getUsername()=="pawits"){
+			echo "<pre>";print_r($sql);exit;
+		}else{
+		return $datas;	
+		}
+	}
+	if($this->user->getUsername()=="pawits"){
+		//return $hasil;
+	}else{
+		//return $datas;
+	}
+  }
+  
+  public function totalss($data=array()){
+    $sql="SELECT DISTINCT(ju.*) FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+	/*else{
+		$sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+	}*/
+	
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+	
+	if(!empty($data['filter_keterangan'])){
+        //$sql .=" AND lower(jd.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' OR lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+		$sql .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+    }
+	
+	if(!empty($data['filter_jenis'])){
+        if(is_array($data['filter_jenis'])){
+          //$arr=implode(",",$data['filter_jenis']);
+          $arr='';
+          foreach($data['filter_jenis'] as $f){
+            $arr .="'".$f."'";
+            if($f != end($data['filter_jenis'])){
+              $arr .=",";
+            }
+          }
+          $sql .=" AND jd.ref_akun IN (".$arr.")";
+        }else{
+          $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }
+    }
+
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+
+    $sql .=" ORDER BY tanggal DESC,id DESC ";
+
+    if (isset($data['start']) || isset($data['limit'])) {
+      if ($data['start'] < 0) {
+        $data['start'] = 0;
+      }
+
+      if ($data['limit'] < 1) {
+        $data['limit'] = 20;
+      }
+
+      $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+    }
+
+    $query = $this->db->query($sql);
+    $datas = $query->rows;
+	$i=0;
+	$j=0;
+	if(isset($data['balance'])){
+		if($data['balance']==1){
+			//$sqls=" select ju.keterangan,ju.ref,ju.type,ju.tanggal,jurnal_id, round(sum(debet)) as totaldebet, round(sum(kredit)) as totalkredit, COALESCE(round(sum(debet))-round(sum(kredit))) as selisih from jurnal_umum_detail left join jurnal_umum ju on (ju.id=jurnal_umum_detail.jurnal_id) WHERE jurnal_id > 0 ";
+			$sqls=" select ju.keterangan,ju.ref,ju.type,ju.tanggal,jurnal_id, round(sum(debet)) as totaldebet, round(sum(kredit)) as totalkredit, COALESCE(round(sum(debet))-round(sum(kredit))) as selisih from jurnal_umum_detail left join jurnal_umum ju on (ju.id=jurnal_umum_detail.jurnal_id) WHERE jurnal_id > 0 and ju.hapus=0 ";
+			//$sqls .=" GROUP BY jurnal_umum.ref,jurnal_umum.type,jurnal_id ,jurnal_umum.keterangan,jurnal_umum.tanggal order by jurnal_id DESC ";
+			
+			if(!empty($data['filter_date_start'])){
+				$sqls .=" AND ju.tanggal between '".$data['filter_date_start']."' AND '".$data['filter_date_end']."'";
+			}
+				if(!empty($data['filter_date_end'])){
+				//$sqls .=" AND ju.tanggal <= '".$data['filter_date_end']."'";
+			}
+			if(!empty($data['filter_keterangan'])){
+				//$sqls .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' OR lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+				$sqls .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+			}
+			
+			if(!empty($data['filter_jenis'])){
+				if(is_array($data['filter_jenis'])){
+				  //$arr=implode(",",$data['filter_jenis']);
+				  $arr='';
+				  foreach($data['filter_jenis'] as $f){
+					$arr .="'".$f."'";
+					if($f != end($data['filter_jenis'])){
+					  $arr .=",";
+					}
+				  }
+				  $sqls .=" AND ref_akun IN (".$arr.")";
+				}else{
+				  $sqls .=" AND ref_akun='".$data['filter_jenis']."' ";
+				}
+			}
+
+			if($data['filter_ref'] != null){
+				$sqls .=" AND ref='".$data['filter_ref']."' ";
+			}
+			
+			$sqls.=" group by jurnal_id, ju.keterangan,ju.ref,ju.type,ju.tanggal order by ju.tanggal desc ";
+	
+			if (isset($data['start']) || isset($data['limit'])) {
+			  if ($data['start'] < 0) {
+				$data['start'] = 0;
+			  }
+
+			  if ($data['limit'] < 1) {
+				$data['limit'] = 20;
+			  }
+				if($this->user->getUsername()=="pawit"){
+					//$sqls .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];	
+				}
+			}
+				$querys = $this->db->query($sqls);
+				//$hasil = $query->rows;
+				foreach($querys->rows as $d ){
+					if($d['selisih']<>0){
+						$hasil[] = array(
+						'keterangan' => $d['keterangan'],
+						'id' => $d['jurnal_id'],
+						'ref'    => $d['ref'],
+						'type'   => $d['type'],
+						'tanggal' => $d['tanggal'],
+						'selisih' => $d['selisih'],
+						'totaldebet' => $d['totaldebet'],
+						'totalkredit' => $d['totalkredit'],
+						);
+					}
+				}
+				if($this->user->getUsername()=="pawits"){
+					echo "<pre>";print_r(count($hasil));exit;
+					}else{
+					return count($hasil);
+				}
+		}else{
+			$sqls=" select ju.keterangan,ju.ref,ju.type,ju.tanggal,jurnal_id, sum(debet) as totaldebet, sum(kredit) as totalkredit, sum(debet-kredit) as selisih from jurnal_umum_detail left join jurnal_umum ju on (ju.id=jurnal_umum_detail.jurnal_id) WHERE jurnal_id > 0 ";
+			//$sqls .=" GROUP BY jurnal_umum.ref,jurnal_umum.type,jurnal_id ,jurnal_umum.keterangan,jurnal_umum.tanggal order by jurnal_id DESC ";
+			
+			if(!empty($data['filter_date_start'])){
+				$sqls .=" AND ju.tanggal >= '".$data['filter_date_start']."'";
+			}
+				if(!empty($data['filter_date_end'])){
+				$sqls .=" AND ju.tanggal <= '".$data['filter_date_end']."'";
+			}
+			if(!empty($data['filter_keterangan'])){
+				//$sqls .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' OR lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+				$sqls .=" AND lower(ju.keterangan) LIKE '%".$this->db->escape(utf8_strtolower($data['filter_keterangan']))."%' ";
+			}
+			
+			if(!empty($data['filter_jenis'])){
+				if(is_array($data['filter_jenis'])){
+				  //$arr=implode(",",$data['filter_jenis']);
+				  $arr='';
+				  foreach($data['filter_jenis'] as $f){
+					$arr .="'".$f."'";
+					if($f != end($data['filter_jenis'])){
+					  $arr .=",";
+					}
+				  }
+				  $sqls .=" AND ref_akun IN (".$arr.")";
+				}else{
+				  $sqls .=" AND ref_akun='".$data['filter_jenis']."' ";
+				}
+			}
+
+			if($data['filter_ref'] != null){
+				$sqls .=" AND ref_akun='".$data['filter_ref']."' ";
+			}
+			
+			$sqls.=" group by jurnal_id, ju.keterangan,ju.ref,ju.type,ju.tanggal order by ju.tanggal desc ";
+	
+			if (isset($data['start']) || isset($data['limit'])) {
+			  if ($data['start'] < 0) {
+				$data['start'] = 0;
+			  }
+
+			  if ($data['limit'] < 1) {
+				$data['limit'] = 20;
+			  }
+
+			  //$sqls .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+			}
+				$querys = $this->db->query($sqls);
+			foreach($querys->rows as $d ){
+					if($d['selisih']==0){
+						$hasils[] = array(
+						'keterangan' => $d['keterangan'],
+						'id' => $d['jurnal_id'],
+						'ref'    => $d['ref'],
+						'type'   => $d['type'],
+						'tanggal' => $d['tanggal'],
+						);
+					}
+				}
+			return $hasils;
+		}
+		
+	}else{
+		if($this->user->getUsername()=="pawits"){
+			echo "<pre>";print_r($sql);exit;
+		}else{
+		return $datas;	
+		}
+	}
+	if($this->user->getUsername()=="pawits"){
+		//return $hasil;
+	}else{
+		//return $datas;
+	}
+  }
+  
+    public function jurnalUmums($data=array()){
+		$sql="SELECT DISTINCT(ju.*) FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 ";
+		if(!empty($data['filter_date_start'])){
+			$sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+		}
+	  // else{
+	  //   $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+	  // }
+	  
+		if(!empty($data['filter_date_end'])){
+			$sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+		}
+	  // else
+	  // {
+	  //   $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+	  // }
+		if(!empty($data['filter_jenis'])){
+			/*if(is_array($data['filter_jenis'])){
+			  //$arr=implode(",",$data['filter_jenis']);
+			  $arr='';
+			  foreach($data['filter_jenis'] as $f){
+				$arr .="'".$f."'";
+				if($f != end($data['filter_jenis'])){
+				  $arr .=",";
+				}
+			  }
+			  //$sql .=" AND jd.ref_akun IN (".$arr.")";
+		  $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+			}else{
+			  $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+			}*/
+		$sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+		}
+	  else{
+		//$sql .=" AND jd.ref_akun in ('1551','1552','1553','1554','2501','2502','2503','2504') ";
+		$sql .=" AND jd.ref_akun='2502'";
+	  }
+
+		if($data['filter_ref'] != null){
+			$sql .=" AND ref='".$data['filter_ref']."' ";
+		}
+
+		$sql .=" ORDER BY tanggal DESC,id DESC ";
+
+		if (isset($data['start']) || isset($data['limit'])) {
+		  if ($data['start'] < 0) {
+			$data['start'] = 0;
+		  }
+
+		  if ($data['limit'] < 1) {
+			$data['limit'] = 20;
+		  }
+
+		  $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+		}
+
+		$query = $this->db->query($sql);
+		return $query->rows;
+	  //return $sql;
+	}
+  
+   public function jurnalUmumtb($id){
+    $sql="SELECT DISTINCT(ju.*) FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 and ju.id='".$id."' ";
+    $query = $this->db->query($sql);
+    $datas = $query->row;
+	return $datas;
+  }
+  
+  
+  public function getb($id){
+	$sqljum="SELECT jurnal_id,COALESCE(sum(debet),0) as totaldebet,COALESCE(sum(kredit),0) as totalkredit,  COALESCE(sum(debet) - sum(kredit)) as selisih FROM jurnal_umum_detail WHERE jurnal_id=".$id." GROUP BY jurnal_id";
+	$sqljum .=" ORDER BY jurnal_id DESC";
+	$qj = $this->db->query($sqljum);
+	$jum = $qj->row;
+	return $jum;
+  }
+  
+  public function totalPPh($data=array()){
+    $sql="SELECT COUNT(DISTINCT(ju.*)) as total FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+	
+	
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+	
+    if(!empty($data['filter_jenis'])){
+        /*if(is_array($data['filter_jenis'])){
+          //$arr=implode(",",$data['filter_jenis']);
+          $arr='';
+          foreach($data['filter_jenis'] as $f){
+            $arr .="'".$f."'";
+            if($f != end($data['filter_jenis'])){
+              $arr .=",";
+            }
+          }
+          //$sql .=" AND jd.ref_akun IN (".$arr.")";
+		  $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }else{
+          $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }*/
+		$sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+    }
+	else{
+		//$sql .=" AND jd.ref_akun in ('1551','1552','1553','1554','2501','2502','2503','2504') ";
+		$sql .=" AND jd.ref_akun='2502'";
+	}
+
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+
+    $query = $this->db->query($sql);
+    return $query->row['total'];
+  }  
+  
+  public function totalPPhs($data=array()){
+    $sql="SELECT COUNT(DISTINCT(ju.*)) as total FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 and jd.kredit<>0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+	
+	
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+	
+    if(!empty($data['filter_jenis'])){
+        /*if(is_array($data['filter_jenis'])){
+          //$arr=implode(",",$data['filter_jenis']);
+          $arr='';
+          foreach($data['filter_jenis'] as $f){
+            $arr .="'".$f."'";
+            if($f != end($data['filter_jenis'])){
+              $arr .=",";
+            }
+          }
+          //$sql .=" AND jd.ref_akun IN (".$arr.")";
+		  $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }else{
+          $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }*/
+		$sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+    }
+	else{
+		//$sql .=" AND jd.ref_akun in ('1551','1552','1553','1554','2501','2502','2503','2504') ";
+		$sql .=" AND jd.ref_akun='2502'";
+	}
+
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+
+    $query = $this->db->query($sql);
+    return $query->row['total'];
+  }    
+
+  public function totalJurnalUmum($data=array()){
+    $sql="SELECT COUNT(DISTINCT(ju.*)) as total FROM jurnal_umum ju JOIN jurnal_umum_detail jd ON(ju.id=jd.jurnal_id) WHERE ju.hapus = 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+	if(!empty($data['filter_keterangan'])){
+        $sql .=" AND jd.keterangan LIKE '%".$data['filter_keterangan']."%'";
+    }
+    if(!empty($data['filter_jenis'])){
+        if(is_array($data['filter_jenis'])){
+          //$arr=implode(",",$data['filter_jenis']);
+          $arr='';
+          foreach($data['filter_jenis'] as $f){
+            $arr .="'".$f."'";
+            if($f != end($data['filter_jenis'])){
+              $arr .=",";
+            }
+          }
+          $sql .=" AND jd.ref_akun IN (".$arr.")";
+        }else{
+          $sql .=" AND jd.ref_akun='".$data['filter_jenis']."' ";
+        }
+    }
+
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+
+    $query = $this->db->query($sql);
+    return $query->row['total'];
+  }
+  
+  public function getJurnalUmum($where){
+    return $this->db->first('jurnal_umum',$where);
+  }
+
+  public function editJurnalUmumManual($data,$id){
+    $this->db->update('jurnal_umum',array('tanggal'=>$data['tanggal']),array('id'=>$id));
+    $this->db->delete('jurnal_umum_detail',array('jurnal_id'=>$id));
+    $i=1;
+    foreach($data['detail'] as $d){
+      $det=array(
+        'ref_akun'  => $d['ref_akun'],
+        'debet' => empty($d['debet'])?0:$d['debet'],
+        'kredit'  => empty($d['kredit'])?0:$d['kredit'],
+        'urutan'  => empty($d['urutan'])?$i:$d['urutan'],
+        'jurnal_id' => $id,
+        'hapus' => 0
+      );
+      $this->db->insert('jurnal_umum_detail',$det);
+      $i++;
+      $this->log->write(json_encode($det));
+    }
+
+  }
+
+  public function hapusJurnal($id){
+    $this->db->delete('jurnal_umum',array('id'=>$id));
+    $this->db->delete('jurnal_umum_detail',array('jurnal_id'=>$id));
+  }
+  
+  // baru 28 September 2019
+  public function getdet($id){
+	$sql ="SELECT * FROM jurnal_umum_detail WHERE ref_akun='1555' and jurnal_id='$id' ";	
+	$d = $this->db->query($sql);
+	return $d->rows;
+  }
+  // end baru 
+  // baru 29 Agustus 2019
+  public function getDetailJurnalUmums($jurnal_id,$filter_jenis){
+    $join=array();
+    $join[]=array(
+      'tablename' => 'coamnb',
+      'firsttable'  => 'jurnal_umum_detail.ref_akun',
+      'secondtable' => 'coamnb.kode_rek'
+    );
+    if(is_array($filter_jenis)){
+      if(!empty($filter_jenis)){
+        $arr='';
+        foreach($filter_jenis as $f){
+          $arr .="'".$f."'";
+          if($f != end($filter_jenis)){
+            $arr .=",";
+          }
+        }
+        //$sql .=" AND jd.ref_akun IN (".$arr.")";
+        $filter_jenis=array("IN",$arr);
+      }
+    }
+    return $this->db->alljoins('jurnal_umum_detail',array('jurnal_umum_detail.id','jurnal_umum_detail.jurnal_id','jurnal_umum_detail.ref_akun','jurnal_umum_detail.debet','jurnal_umum_detail.kredit','jurnal_umum_detail.hapus','jurnal_umum_detail.urutan','coamnb.name as keterangan'),array(),$join,array('jurnal_umum_detail.hapus'=> array('<',1),'jurnal_id' => $jurnal_id,'ref_akun'=>$filter_jenis),array('urutan'=>'ASC'));
+  }
+  // end baru
+
+  public function getDetailJurnalUmum($jurnal_id,$filter_jenis,$data){
+    $join=array();
+    $join[]=array(
+      'tablename' => 'coamnb',
+      'firsttable'  => 'jurnal_umum_detail.ref_akun',
+      'secondtable' => 'coamnb.kode_rek'
+    );
+    if(is_array($filter_jenis)){
+      if(!empty($filter_jenis)){
+        $arr='';
+        foreach($filter_jenis as $f){
+          $arr .="'".$f."'";
+          if($f != end($filter_jenis)){
+            $arr .=",";
+          }
+        }
+        //$sql .=" AND jd.ref_akun IN (".$arr.")";
+        $filter_jenis=array("IN",$arr);
+      }
+    }
+    //$detail = $this->db->alljoins('jurnal_umum_detail',array('jurnal_umum_detail.id','jurnal_umum_detail.jurnal_id','jurnal_umum_detail.ref_akun','jurnal_umum_detail.debet','jurnal_umum_detail.kredit','jurnal_umum_detail.hapus','jurnal_umum_detail.urutan','coamnb.name as keterangan'),array(),$join,array('jurnal_umum_detail.hapus'=> array('<',1),'jurnal_id' => $jurnal_id,'ref_akun'=>$filter_jenis),array('urutan'=>'ASC'));
+	$detail = $this->db->alljoins('jurnal_umum_detail',array('jurnal_umum_detail.id','jurnal_umum_detail.jurnal_id','jurnal_umum_detail.ref_akun','jurnal_umum_detail.debet','jurnal_umum_detail.kredit','jurnal_umum_detail.hapus','jurnal_umum_detail.urutan','coamnb.name as keterangan'),array(),$join,array('jurnal_umum_detail.hapus'=> array('<',1),'jurnal_id' => $jurnal_id),array('urutan'=>'ASC'));
+	$hasil = array();
+	foreach($detail as $d){
+		$debet += $d['debet'];
+		$kredit += $d['kredit'];
+		
+		if(!empty($data['balance'])){
+			if($data['balance']==1){
+				if($debet<>$kredit){
+					$details = array();
+					$balance=1;
+				}else{
+					$details = $detail;
+					$balance=2;
+				}
+			}else{
+				//$details = $detail;
+				//$balance=2;
+			}
+		}else{
+			$details = $detail;
+			$balance=2;
+		}
+		
+	}
+	$hasil = array(
+		'balance' => $balance,
+		'detail' => $details,
+	);
+	return $detail;
+	//return $detail;
+  }
+
+  public function jurnalPengeluaranKas($data=array()){
+    //ambil di aruskas yg typenya 1 dan 2
+    //lihat nilai referensinya
+    //di referensi ambil nilai pajak, diskon, subtotal
+    //debet -> sub total dan pajak jika pajak > 0 kredit totalnya dan diskon
+    $sql="SELECT * FROM aruskas WHERE hapus = 0 AND saldokeluar > 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND date_added >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND date_added <= '".$data['filter_date_end']."'";
+    }
+
+    if (isset($data['start']) || isset($data['limit'])) {
+      if ($data['start'] < 0) {
+        $data['start'] = 0;
+      }
+
+      if ($data['limit'] < 1) {
+        $data['limit'] = 20;
+      }
+
+      $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
+    }
+
+    $query = $this->db->query($sql);
+    return $query->rows;
+
+  }
+  public function totalPengeluaranKas($data=array()){
+    $sql="SELECT COUNT(*) as total FROM aruskas WHERE hapus = 0 AND saldokeluar > 0 ";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND date_added >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND date_added <= '".$data['filter_date_end']."'";
+    }
+
+
+
+    $query = $this->db->query($sql);
+    return $query->row['total'];
+  }
+
+  public function updateJurnalumum($data,$where){
+    $this->db->update('jurnal_umum',$data,$where);
+  }
+  public function updateJurnalUmumDetail($data,$where){
+    $this->db->update('jurnal_umum_detail',$data,$where);
+  }
+  public function totalAkun($ref_akun,$data){
+    $sql="SELECT COALESCE(SUM(debet),0) as totaldebet,COALESCE(SUM(kredit),0) as totalkredit FROM jurnal_umum_detail jd JOIN jurnal_umum ju ON(jd.jurnal_id=ju.id) WHERE ju.hapus=0 AND jd.hapus=0 AND jd.ref_akun='".$ref_akun."'";
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    $result=$this->db->query($sql);
+
+    /*if($ref_akun < 2000){
+      $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    }else{
+      $hasil=$result->row['totalkredit'] - $result->row['totaldebet'];
+    }*/
+    $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    return $hasil;
+  }
+  public function totalDebet($ref_akun,$data=array()){
+    $sql="SELECT COALESCE(SUM(debet),0) as totaldebet FROM jurnal_umum_detail jd JOIN jurnal_umum ju ON(jd.jurnal_id=ju.id) WHERE ju.hapus=0 AND jd.hapus=0 ";
+    if(!empty($ref_akun)){
+      $sql .=" AND jd.ref_akun='".$ref_akun."'";
+    }
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+    $result=$this->db->query($sql);
+
+    /*if($ref_akun < 2000){
+      $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    }else{
+      $hasil=$result->row['totalkredit'] - $result->row['totaldebet'];
+    }*/
+    //$hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    return $result->row['totaldebet'];
+  }
+  public function totalKredit($ref_akun,$data=array()){
+    $sql="SELECT COALESCE(SUM(kredit),0) as totalkredit FROM jurnal_umum_detail jd JOIN jurnal_umum ju ON(jd.jurnal_id=ju.id) WHERE ju.hapus=0 AND jd.hapus=0 ";
+    if(!empty($ref_akun)){
+      $sql .=" AND jd.ref_akun='".$ref_akun."'";
+    }
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+    $result=$this->db->query($sql);
+
+    /*if($ref_akun < 2000){
+      $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    }else{
+      $hasil=$result->row['totalkredit'] - $result->row['totaldebet'];
+    }*/
+    $this->log->write('Hasil ' . $sql);
+    //$hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    return $result->row['totalkredit'];
+  }
+
+  public function totalsumdebet($ref_akun,$data=array()){
+    $sql="SELECT COALESCE(SUM(debet-kredit),0) as total FROM jurnal_umum_detail jd JOIN jurnal_umum ju ON(jd.jurnal_id=ju.id) WHERE ju.hapus=0 AND jd.hapus=0 ";
+    if(!empty($ref_akun)){
+      $sql .=" AND jd.ref_akun='".$ref_akun."'";
+    }
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+    $result=$this->db->query($sql);
+
+    /*if($ref_akun < 2000){
+      $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    }else{
+      $hasil=$result->row['totalkredit'] - $result->row['totaldebet'];
+    }*/
+    //$hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    return $result->row['total'];
+  }
+
+  public function totalsumkredit($ref_akun,$data=array()){
+    $sql="SELECT COALESCE(SUM(kredit-debet),0) as total FROM jurnal_umum_detail jd JOIN jurnal_umum ju ON(jd.jurnal_id=ju.id) WHERE ju.hapus=0 AND jd.hapus=0 ";
+    if(!empty($ref_akun)){
+      $sql .=" AND jd.ref_akun='".$ref_akun."'";
+    }
+    if(!empty($data['filter_date_start'])){
+        $sql .=" AND tanggal >= '".$data['filter_date_start']."'";
+    }
+    if(!empty($data['filter_date_end'])){
+        $sql .=" AND tanggal <= '".$data['filter_date_end']."'";
+    }
+    if($data['filter_ref'] != null){
+        $sql .=" AND ref='".$data['filter_ref']."' ";
+    }
+    $result=$this->db->query($sql);
+
+    /*if($ref_akun < 2000){
+      $hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    }else{
+      $hasil=$result->row['totalkredit'] - $result->row['totaldebet'];
+    }*/
+    //$hasil=$result->row['totaldebet'] - $result->row['totalkredit'];
+    return $result->row['total'];
+  }
+
+}

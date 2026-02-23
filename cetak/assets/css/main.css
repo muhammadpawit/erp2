@@ -1,0 +1,111 @@
+.arwa-menubg {
+  background-color: #697f00 !important;
+}
+
+.navbar-brand {
+  color: #f0f2b6 !important;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.header-utama {
+  font-size: 40px;
+  padding: 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.section-utama {
+  font-size: 24px;
+}
+
+.subsect1 {
+  margin-top: 20px;
+}
+
+.section-secondary {
+  font-size: 18px;
+}
+
+.sect1 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.sect2 {
+  background-color: #c1d5a4;
+  padding: 20px;
+  color: #ac4425;
+}
+
+.header-sub {
+  font-size: 32px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.sect-body {
+  background-color: #fff;
+  padding: 20px;
+  margin-bottom: 10px;
+}
+
+.sect-body p,
+.sect-body li {
+  font-size: 20px;
+}
+
+.poin {
+  background-color: #ac4425;
+  color: #c1d5a4;
+  height: 120px;
+  padding: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.poin-header {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.sect-card {
+  background-color: #f0f2b6;
+  padding: 20px;
+  height: 325px;
+}
+
+.body-sect {
+  background: #ffffff;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.sect-final {
+  background-color: #c1d5a4;
+  padding: 20px;
+  color: #ac4425;
+  margin-top: 20px;
+}
+
+footer {
+  background-color: #224b0c;
+  height: 80px;
+}
+
+footer p {
+  text-align: center;
+  color: #697f00;
+  font-weight: bold;
+  padding-top: 20px;
+}
+
+.galery {
+  margin-bottom: 10px;
+}
+
+.galery img {
+  margin-bottom: 5px;
+}

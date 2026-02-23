@@ -1,0 +1,269 @@
+<?php //echo $header; ?>
+<body onload="window.print()">
+<div class="content-wrapper">
+  <section class="content-header">
+    <h1>
+
+    </h1>
+
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="box">
+          <div class="box-header with-border">
+            <h3 class="box-title">Sales Order Gantung</h3>
+          </div>
+          <div class="box-body">
+            <div class="row">
+              <div class="col-md-12">
+                <?php if ($error_warning) { ?>
+                <div class="alert alert-danger alert-dismissible">
+                  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                  <h4><i class="icon fa fa-ban"></i> Alert!</h4>
+                  <?php echo $error_warning; ?>
+                </div>
+                <?php
+                }
+                ?>
+                <?php if ($success) { ?>
+                <div class="alert alert-success alert-dismissible">
+                  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                  <h4><i class="icon fa fa-check"></i> Success!</h4>
+                  <?php echo $success; ?>
+                </div>
+                <?php
+                }
+                ?>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <form action="<?php echo $delete; ?>" method="post" enctype="multipart/form-data" id="form">
+                  <table class="table table-bordered" style="border-collapse: collapse;" border="1">
+                    <thead>
+                      <tr>
+                        <th width="1" style="text-align: center;">Tanggal</th>
+                        <th class="left">Gudang</th>
+                        <th class="left">No. SO</th>
+                        <th class="left">Nama Customer</th>
+                        <th class="left">Nama Barang</th>
+                        <th class="left">Qty Kirim</th>
+                        <th class="left">Qty Terima</th>
+                        <th class="left">Status Pengiriman</th>
+                        <th class="left">Catatan</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      
+                      <?php if ($penjualans) { ?>
+                      <?php foreach ($penjualans as $product) { ?>
+                      <tr>
+                        <td <?php echo $product['status'] == 4?'style="background:#f3bfbf;"':'';?>><?php echo $product['tanggal']; ?></td>
+                        <td <?php echo $product['status'] == 4?'style="background:#f3bfbf;"':'';?> class="left"><?php echo $product['namagudang']; ?></td>
+
+                        <td <?php echo $product['status'] == 4?'style="background:#f3bfbf;"':'';?> class="left"><?php echo $product['no_so']; ?>
+                        </td>
+
+                        <td <?php echo $product['status'] == 4?'style="background:#f3bfbf;"':'';?> class="left"><?php echo $product['name']; ?></td>
+                        <td <?php echo $product['status'] == 4?'style="background:#f3bfbf;"':'';?>><?php echo $product['nameproduct']; ?></td>
+                        <td <?php echo $product['status'] == 4?'style="background:#f3bfbf;"':'';?>><?php echo $product['quantity']; ?></td>
+                        <td <?php echo $product['status'] == 4?'style="background:#f3bfbf;"':'';?>><?php echo $product['quantityterima']; ?></td>
+                        <td><?php echo $product['status'] ?></td>
+                        <td><?php echo $product['catatan'] ?></td>
+                      </tr>
+                      <?php } ?>
+                      <?php } else { ?>
+                      <tr>
+                        <td class="center" colspan="8">Data tidak ditemukan</td>
+                      </tr>
+                      <?php } ?>
+                    </tbody>
+                  </table>
+                </form>
+              </div>
+            </div>
+
+          </div>
+          <div class="box-footer">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="pull-right"><?php //echo $pagination; ?></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</div>
+</body>
+<script>
+$('.sidebar-menu').find('#menu-penjualan').addClass('active');
+$('.sidebar-menu').find('#menu-salesorder').addClass('active');
+</script>
+<script>
+$(function(){
+  $('.date').datepicker({dateFormat: 'yy-mm-dd'});
+})
+</script>
+<script type="text/javascript"><!--
+function filter() {
+	url = "index.php?route=sale/salesorder/sogantung&token=<?php echo $token; ?>";
+
+	var filter_customer_id = $('select[name=\'filter_customer_id\']').val();
+
+	if (filter_customer_id != '*') {
+		url += '&filter_customer_id=' + encodeURIComponent(filter_customer_id);
+	}
+
+    var filter_status= $('select[name=\'filter_status\']').val();
+
+	if (filter_status != '*') {
+		url += '&filter_status=' + encodeURIComponent(filter_status);
+	}
+
+  var filter_tanggal = $('input[name=\'filter_tanggal\']').val();
+
+	if (filter_tanggal) {
+		url += '&filter_tanggal=' + encodeURIComponent(filter_tanggal);
+	}
+
+  var filter_gudang_id = $('select[name=\'filter_gudang_id\']').val();
+
+	if (filter_gudang_id != '*') {
+		url += '&filter_gudang_id=' + encodeURIComponent(filter_gudang_id);
+	}
+
+  var filter_order_id = $('select[name=\'filter_order_id\']').val();
+
+	if (filter_order_id != '*') {
+		url += '&filter_order_id=' + encodeURIComponent(filter_order_id);
+	}
+  var filter_jenisorder = $('select[name=\'filter_jenisorder\']').val();
+
+	if (filter_jenisorder != '*') {
+		url += '&filter_jenisorder=' + encodeURIComponent(filter_jenisorder);
+	}
+
+  /*var filter_shipping_method = $('select[name=\'filter_shipping_method\']').val();
+
+	if (filter_shipping_method != '*') {
+		url += '&filter_shipping_method=' + encodeURIComponent(filter_shipping_method);
+	}
+*/
+
+
+	location = url;
+}
+$(function(){
+  $(".select-ads").select2({
+
+
+      theme:"bootstrap"
+    });
+  $(".lokasi-pameran").select2({
+    ajax: {
+    url:"index.php?route=sale/customer/autocomplete&token=<?php echo $token; ?>",
+    //url: "index.php?route=pamerantoko/toko/autocomplete&token=<?php echo $this->request->get['token']; ?>",
+    dataType: 'json',
+    data: function (params) {
+      return {
+        q: params.term, // search term
+
+      };
+    },
+    delay: 250,
+    processResults: function (data) {
+      return {
+        results: data
+      };
+    },
+    //cache: true
+  },
+  theme:"bootstrap"
+  });
+
+  $(".salesorder").select2({
+    ajax: {
+    url:"index.php?route=sale/salesorder/autocomplete&token=<?php echo $token; ?>",
+    //url: "index.php?route=pamerantoko/toko/autocomplete&token=<?php echo $this->request->get['token']; ?>",
+    dataType: 'json',
+    data: function (params) {
+      return {
+        q: params.term, // search term
+
+      };
+    },
+    delay: 250,
+    processResults: function (data) {
+      return {
+        results: data
+      };
+    },
+    //cache: true
+  },
+  theme:"bootstrap"
+  });
+
+  $(".jenisorder").select2({
+    ajax: {
+    url:"index.php?route=catalog/product/autocompleteprod&token=<?php echo $this->request->get['token']; ?>",
+      dataType: 'json',
+    data: function (params) {
+      return {
+        q: params.term
+
+      };
+    },
+    delay: 250,
+    processResults: function (data) {
+      return {
+        results: data
+      };
+    },
+    //cache: true
+  },
+  theme:"bootstrap"
+  });
+})
+//--></script>
+<script type="text/javascript"><!--
+$('#form input').keydown(function(e) {
+	if (e.keyCode == 13) {
+		filter();
+	}
+});
+//--></script>
+<script type="text/javascript"><!--
+$('input[name=\'filter_name\']').autocomplete({
+	delay: 0,
+	source: function(request, response) {
+		$.ajax({
+			url: 'index.php?route=catalog/atk/autocomplete&token=<?php echo $token; ?>&filter_name=' +  encodeURIComponent(request.term),
+			dataType: 'json',
+			success: function(json) {
+				response($.map(json, function(item) {
+					return {
+						label: item.nama,
+						value: item.atk_id
+					}
+				}));
+			}
+		});
+	},
+	select: function(event, ui) {
+		$('input[name=\'filter_name\']').val(ui.item.label);
+
+		return false;
+	},
+	focus: function(event, ui) {
+      	return false;
+   	}
+});
+
+
+//--></script>
+<?php //echo $footer; ?>

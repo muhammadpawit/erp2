@@ -1,0 +1,346 @@
+<?php echo $header; ?>
+<div class="content-wrapper">
+  <section class="content-header">
+    <h1>
+
+    </h1>
+
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="box">
+          <div class="box-header with-border">
+            <h3 class="box-title">Laporan Status PO</h3>
+            <div class="button pull-right">
+              <a href="<?php echo $excel?>" target="_blank" class="btn btn-success">Export to excel</a>
+            </div>
+          </div>
+          <div class="box-body">
+            <div class="row">
+              <div class="col-md-12">
+
+                <?php if ($success) { ?>
+                <div class="alert alert-success alert-dismissible">
+                  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                  <h4><i class="icon fa fa-check"></i> Success!</h4>
+                  <?php echo $success; ?>
+                </div>
+                <?php
+                }
+                ?>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <table class="table table-stripped">
+                    <thead>
+                      <tr>
+                        <th colspan="2">Filter Tanggal</th>
+                        <th>Nomor PO</th>
+                        <th>Vendor</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                      <td><input type="text" class="form-control" placeholder="Tanggal Awal" name="filter_date_start" value="<?php echo $filter_date_start; ?>" id="date-start" size="12"  /></td>
+                      <td><input type="text" class="form-control" placeholder="Tanggal Akhir" name="filter_date_end" value="<?php echo $filter_date_end; ?>" id="date-end" size="12"  /></td>
+                      <td>
+                        <select name="filter_no_po" style="width:300px" class="form-control nosurat">
+                      </select>
+                      </td>
+                      <td>
+                        <select style="width:300px" name="filter_vendor" class="vendor">
+                          <option value="*">Semua Vendor</option>
+                        </select>
+                      </td>
+                      <td><a onclick="filter();" class="btn btn-info">Filter</a></td>
+                    <!--<td>
+                      <select name="filter_no_surat" class="form-control suratpermintaan">
+                     </select>
+                    </td>-->
+
+                    </tr>
+                  </tbody>
+                  </table>
+                  <!--
+                  <table class="table table-stripped">
+                      <thead>
+                        <tr>
+                          <th>Vendor</th>
+                          <th>Status Penerimaan</th>
+
+                          <th></th>
+
+                        </tr>
+                      </thead>
+                      <tbody>
+                      <tr>
+
+                        <td>
+                          <select style="width:200px" name="filter_vendor" class="vendor">
+                            <option value="*">Semua Vendor</option>
+
+                          </select>
+                        </td>
+                        <td>
+
+                              <select class="form-control" name="filter_status">
+                                <option value="*" <?php echo $filter_status == '*'?'selected':''; ?> >Semua Status</option>
+                                <option value="0" <?php echo $filter_status == '0'?'selected':''; ?>>Belum Diterima</option>
+                                <option value="1" <?php echo $filter_status == 1?'selected':''; ?>>Sudah Diterima</option>
+                                <option value="2" <?php echo $filter_status == 2?'selected':''; ?>>Diterima Sebagian</option>
+                                <option value="5" <?php echo $filter_status == 5?'selected':''; ?>>Sudah Diterima(PO Ditutup)</option>
+
+                              </status>
+                          </td>
+
+                        <td ><a onclick="filter();" class="btn btn-info">Filter</a></td>
+                      </tr>
+                    </tbody>
+                    </table>-->
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Tanggal PO</th>
+                        <!--th>Jatuh Tempo</th-->
+                        <th>Nama Barang</th>
+                        <th>Nomor PO</th>
+                        <th>Terkirim</th>
+                        <!--<th>No. Invoice</th>-->
+                        <!--<th>Metode Pembayaran</th>
+                        <th>Metode Pengiriman</th>
+                        <th>Nomor Surat Permintaan</th>
+                        <th>Gudang</th>
+                        <th>Vendor</th>
+                        <th>Total</th>-->
+                        <th>Status Pengiriman</th>
+                        <th>Tertagih</th>
+                        <th>Status Tagihan</th>
+                        <!--<th>Quantity PO</th>-->
+                        <!--<th>Quantity Diterima</th>-->
+                        <th></th>
+
+                      </tr>
+                    </thead>
+                    <tbody>
+
+                      <?php if ($permintaans) { ?>
+                      <?php foreach ($permintaans as $product) { ?>
+                      <tr>
+                        <td><?php echo $product['tanggal']; ?></td>
+                        <td><?php echo $product['product_name']; ?></td>
+                        <!--td><?php echo $product['jatuhtempo']=='01/01/70'?'':$product['jatuhtempo']; ?></td-->
+                        <td><?php echo $product['no_po']; ?></td>
+                        <td>
+                          <?php foreach($product['sj'] as $sj){ ?>
+                              No.SJ <?php echo $sj['nosj'];?><br>
+                          <?php } ?>
+                        </td>
+                        <!--<td></td>-->
+                        <!--<td><?php echo $product['metode_pembayaran']; ?></td>
+                        <td><?php echo $product['metode_pengiriman']; ?></td>-->
+                          <!--td><a target="_blank" href="<?php echo $product['hrefsurat']; ?>"><?php echo $product['no_surat']; ?></a></td-->
+                        <!--<td><?php echo $product['no_surat']; ?></td>
+                        <td><?php echo $product['gudang']; ?></td>
+                        <td><?php echo $product['name']; ?></td>
+                        <!--<td><?php echo $product['total_pembelian']; ?></td>-->
+                        <td><?php echo $product['status_pengiriman']; ?></td>
+                        <td>
+                          <?php $jiv=0;?>
+                          <?php foreach($product['iv'] as $ivs){?>
+                              <?php $jiv+=$ivs['qty'];?>
+                              No.Inv <?php echo $ivs['no_faktur']?><br>
+                          <?php } ?>
+                        </td>
+                        <td>
+                          <?php 
+                            if($jiv>0){
+                              echo $jiv==$product['quantity']?'Tertagih semua':'Tertagih sebagian';   
+                            }
+                            
+                          ?>
+                        </td>
+                        <!--<td><?php echo $product['quantity']; ?></td>-->
+                        <!--<td><?php echo $product['quantityterima']; ?></td>-->
+                        <td class="right"><?php foreach ($product['actions'] as $action) {
+
+                          ?>
+
+                           <a href="<?php echo $action['href']; ?>"  <?php echo $action['text']=='Cetak PO'?'target="_blank"':''; ?> class="badge <?php echo $action['text']=='Batalkan' | $action['text']=='Tutup PO'?'bg-red':'bg-blue'; ?>"><?php echo $action['text']; ?></a><br>
+                          <?php } ?></td>
+                      </tr>
+                      <?php } ?>
+                      <?php } else { ?>
+                      <tr>
+                        <td class="center" colspan="9">Data tidak ditemukan</td>
+                      </tr>
+                      <?php } ?>
+                    </tbody>
+                  </table>
+
+              </div>
+            </div>
+
+          </div>
+          <div class="box-footer">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="pull-right"><?php echo $pagination; ?></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</div>
+<script>
+$('.sidebar-menu').find('#menu-pembelian').addClass('active');
+$('.sidebar-menu').find('#menu-pembelian-kredit').addClass('active');
+
+$(function(){
+  $(".nosurat").select2({
+    ajax: {
+    url:"index.php?route=pembelian/pembeliankreditdagang/autocomplete&token=<?php echo $this->request->get['token']; ?>",
+    dataType: 'json',
+    data: function (params) {
+      return {
+        q: params.term,
+
+
+      };
+    },
+    delay: 250,
+    processResults: function (data) {
+      return {
+        results: data
+      };
+    },
+    //cache: true
+  },
+  theme:"bootstrap"
+})
+$(".suratpermintaan").select2({
+  ajax: {
+  url:"index.php?route=pembelian/permintaanpembelian/autocomplete&token=<?php echo $this->request->get['token']; ?>",
+  dataType: 'json',
+  data: function (params) {
+    return {
+      q: params.term,
+      j: 2,
+      status:5,
+      s:1// search term
+
+    };
+  },
+  delay: 250,
+  processResults: function (data) {
+    return {
+      results: data
+    };
+  },
+  //cache: true
+},
+theme:"bootstrap"
+})
+  $(".vendor").select2({
+    ajax: {
+    url:"index.php?route=catalog/vendorlokal/autocomplete&token=<?php echo $this->request->get['token']; ?>",
+    dataType: 'json',
+    data: function (params) {
+      return {
+        filter_name: params.term
+      };
+    },
+    delay: 250,
+    processResults: function (data) {
+      return {
+        results: data
+      };
+    },
+    //cache: true
+  },
+  theme:"bootstrap"
+  });
+
+});
+
+</script>
+<script type="text/javascript"><!--
+$(document).ready(function() {
+  $('#date-start').datepicker({dateFormat: 'yy-mm-dd'});
+
+  $('#date-end').datepicker({dateFormat: 'yy-mm-dd'});
+});
+//--></script>
+<script type="text/javascript"><!--
+function filter() {
+  url = 'index.php?route=report/statuspo&token=<?php echo $token; ?>';
+
+  var filter_date_start = $('input[name=\'filter_date_start\']').val();
+
+  if (filter_date_start) {
+    url += '&filter_date_start=' + encodeURIComponent(filter_date_start);
+  }
+
+  var filter_date_end = $('input[name=\'filter_date_end\']').val();
+
+  if (filter_date_end) {
+    url += '&filter_date_end=' + encodeURIComponent(filter_date_end);
+  }
+
+  var filter_no_po = $('select[name=\'filter_no_po\']').val();
+
+  if (filter_no_po != '*' & filter_no_po != null) {
+    url += '&filter_no_po=' + encodeURIComponent(filter_no_po);
+  }
+
+  var filter_vendor = $('select[name=\'filter_vendor\']').val();
+
+  if (filter_vendor != '*' & filter_vendor != null) {
+    url += '&filter_vendor=' + encodeURIComponent(filter_vendor);
+  }
+  /*
+  var filter_no_surat = $('select[name=\'filter_no_surat\']').val();
+
+  if (filter_no_surat != '*' & filter_no_surat != null) {
+    url += '&filter_no_surat=' + encodeURIComponent(filter_no_surat);
+  }
+  var filter_status = $('select[name=\'filter_status\']').val();
+
+  if (filter_status != '*') {
+    url += '&filter_status=' + encodeURIComponent(filter_status);
+  }
+
+  
+
+  */
+
+
+  
+
+  location = url;
+}
+//--></script>
+<script type="text/javascript"><!--
+$(document).ready(function() {
+  $('.date').datepicker({dateFormat: 'yy-mm-dd'});
+});
+//--></script>
+<script type="text/javascript"><!--
+$('#form input').keydown(function(e) {
+  if (e.keyCode == 13) {
+    filter();
+  }
+});
+//--></script>
+<?php echo $footer; ?>

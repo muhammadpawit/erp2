@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js">
+    <script src="assets/bootstrap.js"></script>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <title>PT Nisson Indonesia</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark bg-primary">
+    <a class="navbar-brand" href="#">Nisson Indonesia</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor03"
+        aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    
+   
+    </nav>
+    <section class="sect1 container-fluid">
+        <h1 style="font-size:20px">Cetak Surat Jalan & Invoice</h1>
+        <form>
+            <div class="row">
+                <div class="col-xs-12 col-md-6">
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Nomor SJ</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="no_sj" class="form-control" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Nomor Invoice</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="no_faktur"  class="form-control" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Nama Gudang</label>
+                        <div class="col-sm-10">
+                            <input name="namagudang" type="text" class="form-control" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Referensi</label>
+                        <div class="col-sm-10">
+                            <input name="salesorder" type="text" class="form-control"  value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Sales</label>
+                        <div class="col-sm-10">
+                            <input name="sales" type="text" class="form-control" id="no_sj" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="name" class="col-sm-2 col-form-label">Nama Customer</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="name" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="name" class="col-sm-2 col-form-label">Phone</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="telephone" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="alamat" class="col-sm-2 col-form-label">Alamat</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="alamat" id="alamat" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="alamat" class="col-sm-2 col-form-label">Alamat Kirim</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="address_1" value="">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-md-6">
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Tanggal Pengiriman/Tanggal Faktur</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" name="date_added" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Jatuh Tempo</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" name="jatuhtempo" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Metode Pengiriman</label>
+                        <div class="col-sm-10">
+                            <select name="pengiriman" class="form-control">
+                                <option value="DIAMBIL">Diambil</option>
+                                <option value="DIANTAR">Diantar</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Metode Pembayaran</label>
+                        <div class="col-sm-10">
+                            <select name="metode_pembayaran" class="form-control">
+                                <option value="1">Tunai</option>
+                                <option value="2">COD</option>
+                                <option value="3">Kredit</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Kendaraan</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="no_pol" class="form-control" id="no_sj" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Driver</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="sopir" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Kernet</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="kernet" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Sub Total</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" readonly name="sub_total" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Potongan Harga</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" onblur="updatetotal()" name="diskon" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Uang Muka</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" onblur="updatetotal()" name="dp" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Pajak</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" onblur="updatetotal()" name="pajak" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj"  class="col-sm-2 col-form-label">Total</label>
+                        <div class="col-sm-10">
+                            <input type="text" readonly class="form-control" name="total" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="no_sj" class="col-sm-2 col-form-label">Total Tagihan</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="totaltagihan" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-reponsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Qty</th>
+                            <th scope="col">Satuan</th>
+                            <th scope="col">Nama Barang</th>
+                            <th scope="col">Harga</th>
+                            <th scope="col">Jumlah</th>
+                            <th scope="col">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="list-produk">
+                        
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-active">
+                            <td colspan="5"></td>
+                            <td><button onclick="tambah()" type="button" class="btn btn-primary">Tambah</button></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <button onclick="cetak()" type="button" class="btn btn-primary">Cetak SJ</button>
+                <button onclick="cetakinvoice()" type="button" class="btn btn-primary">Cetak Invoice</button>
+            </div>
+        </form>
+    </section>
+    
+    <footer>
+       
+    </footer>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    
+    <script>
+        var i=1;
+        
+        function tambah(){
+            html='<tr id="baris-'+i+'"><td><input onblur="updatetotal()" name="products['+i+'][quantity]" type="text" class="form-control"></td>';
+            html+='<td><input name="products[' + i +'][namasatuan]" type="text" class="form-control"></td>';
+            html += '<td><input name="products[' + i +'][name]" type="text" class="form-control"></td>';
+            html += '<td><input name="products[' + i +'][price]" onblur="updatetotal()" type="text" class="form-control"></td>';
+            html += '<td><input name="products[' + i +'][total]" readonly type="text" class="form-control"></td>';
+            html += '<td><button onclick="hapus('+i+')" type="button" class="btn btn-danger">Hapus</button></td></tr>';
+            i++;
+            $("#list-produk").append(html);
+        }
+        function hapus(y){
+            $("#baris-"+y).remove();
+            updatetotal();
+        }
+        function updatetotal(){
+            products = []
+            sub_total=0;
+            for (y = 1; y < i; y++) {
+
+                if ($("input[name='products[" + y + "][quantity]']").val() != undefined) {
+                    /*product = {
+                        "quantity": $("input[name='products[" + y + "][quantity]']").val(),
+                        "namasatuan": $("input[name='products[" + y + "][namasatuan]']").val(),
+                        "name": $("input[name='products[" + y + "][name]']").val()
+                    }
+                    products[y] = product;
+                    */
+                   quantity= $("input[name='products[" + y + "][quantity]']").val();
+                   harga= $("input[name='products[" + y + "][price]']").val();
+
+                   totalitem=quantity * harga;
+                   $("input[name='products[" + y + "][total]']").val(totalitem)
+                   sub_total +=totalitem;
+                }
+
+            }
+            pajak= $("input[name='pajak']").val();
+            diskon = $("input[name='diskon']").val();
+            dp = $("input[name='dp']").val();
+
+            total=sub_total - diskon + Number(pajak) - dp;
+            $("input[name='sub_total']").val(sub_total);
+            $("input[name='total']").val(total);
+           
+            
+        }
+        function cetak(){
+            productsori = []
+            for(y=1;y<i;y++){
+                
+                if($("input[name='products["+y+"][quantity]']").val() != undefined){
+                    product={
+                        "quantity": $("input[name='products[" + y + "][quantity]']").val(),
+                        "namasatuan" : $("input[name='products[" + y + "][namasatuan]']").val(),
+                        "name" : $("input[name='products[" + y + "][name]']").val(),
+                        "price": $("input[name='products[" + y + "][price]']").val(),
+                        "total": $("input[name='products[" + y + "][total]']").val()
+                    }
+                   productsori[y]=product;
+                    
+                }
+               
+            }
+            products = productsori.filter(function (el) {
+                return el != null;
+            });
+            order = {
+                "no_sj": $("input[name='no_sj']").val(),
+                "namagudang": $("input[name='namagudang']").val(),
+                "salesorder": $("input[name='salesorder']").val(),
+                "sales": $("input[name='sales']").val(),
+                "name": $("input[name='name']").val(),
+                "telephone": $("input[name='telephone']").val(),
+                "alamat": $("input[name='alamat']").val(),
+                "address_1": $("input[name='address_1']").val(),
+                "date_added": $("input[name='date_added']").val(),
+                "pengiriman": $("select[name='pengiriman']").val(),
+                "metode_pembayaran": $("select[name='metode_pembayaran']").val(),
+                "no_pol": $("input[name='no_pol']").val(),
+                "sopir": $("input[name='sopir']").val(),
+                "kernet": $("input[name='kernet']").val(),
+                "sub_total": $("input[name='sub_total']").val(),
+                "products":products
+            }
+            detail=[];
+            detail=order;
+            console.log(detail);
+           $.ajax({
+                url: 'http://localhost/nissonprint/printsjmanual',
+                dataType: 'json',
+                method: 'POST',
+                data: JSON.stringify(detail),
+                success: function (json) {
+                    console.log(detail);
+                    alert("Surat jalan berhasil dicetak.");
+                    //location.reload();
+                }
+            });
+        }
+        function cetakinvoice() {
+               productsori = []
+            for (y = 1; y < i; y++) {
+
+                if ($("input[name='products[" + y + "][quantity]']").val() != undefined) {
+                    product = {
+                        "quantity": $("input[name='products[" + y + "][quantity]']").val(),
+                        "namasatuan": $("input[name='products[" + y + "][namasatuan]']").val(),
+                        "name": $("input[name='products[" + y + "][name]']").val(),
+                        "price": $("input[name='products[" + y + "][price]']").val(),
+                        "total": $("input[name='products[" + y + "][total]']").val()
+                    }
+                    productsori[y] = product;
+
+                }
+
+
+            }
+
+           products= productsori.filter(function (el) {
+                return el != null;
+            });
+
+            order = {
+                "no_sj": $("input[name='no_sj']").val(),
+                "no_faktur": $("input[name='no_faktur']").val(),
+                "namagudang": $("input[name='namagudang']").val(),
+                "salesorder": $("input[name='salesorder']").val(),
+                "sales": $("input[name='sales']").val(),
+                "name": $("input[name='name']").val(),
+                "telephone": $("input[name='telephone']").val(),
+                "alamat": $("input[name='alamat']").val(),
+                "address_1": $("input[name='address_1']").val(),
+                "date_added": $("input[name='date_added']").val(),
+                "jatuhtempo": $("input[name='jatuhtempo']").val(),
+                "pengiriman": $("select[name='pengiriman']").val(),
+                "metode_pembayaran": $("select[name='metode_pembayaran']").val(),
+                "no_pol": $("input[name='no_pol']").val(),
+                "sopir": $("input[name='sopir']").val(),
+                "kernet": $("input[name='kernet']").val(),
+                "sub_total": $("input[name='sub_total']").val(),
+                "diskon": $("input[name='diskon']").val(),
+                "pajak": $("input[name='pajak']").val(),
+                "total": $("input[name='total']").val(),
+                 "dp": $("input[name='dp']").val(),
+                 "totaltagihan": $("input[name='totaltagihan']").val(),
+                "products": products
+            }
+            detail = [];
+            detail = order;
+            console.log(detail);
+            $.ajax({
+                url: 'http://localhost/nissonprint/printinvoicemanual',
+                dataType: 'json',
+                method: 'POST',
+                data: JSON.stringify(detail),
+                success: function (json) {
+                  alert("Invoice berhasil dicetak.");
+                  console.log(json);
+                  //location.reload();
+                    
+                }
+            });
+            }
+        $(function(){
+            updatetotal();
+        })
+    </script>
+
+</body>
+
+</html>
