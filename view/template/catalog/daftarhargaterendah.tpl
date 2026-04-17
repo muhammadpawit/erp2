@@ -87,9 +87,9 @@
                       <td >
                         <select name="filter_gudang_id" class="form-control">
                           <option value="*">Pilih Gudang</option>
-                          <option value="1" <?php echo $_REQUEST['filter_gudang_id']==1?'selected':''?>>Tangerang</option>
-                          <option value="3" <?php echo $_REQUEST['filter_gudang_id']==3?'selected':''?>>Surabaya</option>
-                          <option value="70" <?php echo $_REQUEST['filter_gudang_id']==70?'selected':''?>>Hanson (Surabaya)</option>
+                          <?php foreach ($gudangs as $gudang) { ?>
+                          <option value="<?php echo $gudang['gudang_id']; ?>" <?php echo $filter_gudang_id == $gudang['gudang_id'] ? 'selected' : ''; ?>><?php echo $gudang['nama']; ?></option>
+                          <?php } ?>
                         </select>
                       </td>
                       <!--<td><input type="text" class="form-control" name="filter_product_name" value="<?php echo $filter_name; ?>" /></td>-->
@@ -118,15 +118,17 @@
                             <th>Mulai berlaku</th>
                             <th></th>
                             <th></th>
+                            <th></th>
                           </tr>
                           </thead>
                           <tbody>
                             <?php foreach($periode as $p){ ?>
                             <tr>
-                              <td><?php echo $filter_gudang_id==1?'Tangerang':''; ?> <?php echo $filter_gudang_id==3?'Surabaya':''; ?> <?php echo $filter_gudang_id==70?'Hanson (Surabaya)':''; ?></td>
+                              <td><?php echo $gudang_name; ?></td>
                               <td><?php echo date('d/m/Y',strtotime($p['date']))?></td>
                               <td><a href="index.php?route=catalog/productterendah&token=<?php echo $token; ?>&t=1&filter_gudang_id=<?php echo $filter_gudang_id ?>&date=<?php echo date('Y-m-d',strtotime($p['date'])) ?>" class="badge bg-red">Lihat</a></td>
                               <td><a href="index.php?route=catalog/productterendah&token=<?php echo $token; ?>&&print=1&t=1&filter_gudang_id=<?php echo $filter_gudang_id ?>&date=<?php echo date('Y-m-d',strtotime($p['date'])) ?>" class="badge bg-green">Export to Excel</a></td>
+                              <td><a onclick="confirm('Apakah anda yakin ingin menghapus periode ini?') ? location = 'index.php?route=catalog/productterendah/deleteperiode&token=<?php echo $token; ?>&filter_gudang_id=<?php echo $filter_gudang_id ?>&date=<?php echo date('Y-m-d',strtotime($p['date'])) ?>' : false;" class="badge bg-red" title="Hapus"><i class="fa fa-trash"></i> Hapus</a></td>
                             </tr>
                             <?php } ?>
                           </tbody>
@@ -134,12 +136,12 @@
                     </div>
                   </div>
                   <div class="box-footer clearfix" style="">
-                  <a href="index.php?route=catalog/productterendah/set&token=<?php echo $token; ?>&t=1&filter_gudang_id=<?php echo $filter_gudang_id ?>&date=<?php echo date('Y-m-d',strtotime($tglterakhir)) ?>" class="badge bg-blue">Set harga terendah pada daftar barang terakhir Gudang <?php echo $filter_gudang_id==3?'Surabaya':''; ?> <?php echo $filter_gudang_id==70?'Hanson (Surabaya)':''; ?></a>
+                  <a href="index.php?route=catalog/productterendah/set&token=<?php echo $token; ?>&t=1&filter_gudang_id=<?php echo $filter_gudang_id ?>&date=<?php echo date('Y-m-d',strtotime($tglterakhir)) ?>" class="badge bg-blue">Set harga terendah pada daftar barang terakhir Gudang <?php echo $gudang_name; ?></a>
                   </div>
                 </div>
               </div>
               <div class="col-md-8 col-xs-12">
-                    <h4>Daftar produk terbaru yang belum di set harga terendahnya per tanggal <?php echo date('d-m-Y',strtotime($tglterakhir))?> gudang <?php echo $filter_gudang_id==3?'Surabaya':'Tangerang'; ?> </h4>
+                    <h4>Daftar produk terbaru yang belum di set harga terendahnya per tanggal <?php echo date('d-m-Y',strtotime($tglterakhir))?> gudang <?php echo $gudang_name; ?> </h4>
                     <form method="post" action="<?php echo $setbelum ?>">
                     <table class="table table-bordered">
                       <thead>
@@ -148,7 +150,8 @@
                             <th>Gudang</>
                             <th>Produk</>
                             <th>Harga Terendah</>
-                            <th>Poin</>
+                            <th>Poin</th>
+                            <th></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -158,7 +161,7 @@
                             <input type="hidden" name="set[<?php echo $j?>][product_id]" value="<?php echo $k['product_id']?>">
                             <input type="hidden" name="set[<?php echo $j?>][gudang_id]" value="<?php echo $filter_gudang_id?>">
                             <td><?php echo date('d-m-Y',strtotime($tglterakhir))?></td>
-                            <td><?php echo $filter_gudang_id==1?'Tangerang':''; ?> <?php echo $filter_gudang_id==3?'Surabaya':''; ?> <?php echo $filter_gudang_id==70?'Hanson (Surabaya)':''; ?></td>
+                            <td><?php echo $gudang_name; ?></td>
                             <td><?php echo $k['name']; ?></td>
                             <td>
                               <input type="text" name="set[<?php echo $j?>][harga_terendah]" value="0">
@@ -166,6 +169,7 @@
                               <input type="hidden" name="set[<?php echo $j?>][name]" value="<?php echo $k['name']?>">
                             </td>
                             <td><input type="text" name="set[<?php echo $j?>][poin]" value="0"></td>
+                            <td><a onclick="confirm('Apakah anda yakin ingin menghapus produk ini dari gudang?') ? location = 'index.php?route=catalog/productterendah/deleteproductgudang&token=<?php echo $token; ?>&product_id=<?php echo $k['product_id']; ?>&filter_gudang_id=<?php echo $filter_gudang_id; ?>&date=<?php echo date('Y-m-d',strtotime($tglterakhir)) ?>' : false;" class="badge bg-red" title="Hapus dari Gudang"><i class="fa fa-trash"></i> Hapus</a></td>
                           </tr>
                           <?php $j++;?>
                         <?php } ?>
@@ -205,7 +209,9 @@
                         <td class="right poin" id="<?php echo $product['id']; ?>"> <?php echo $product['poin']; ?> </td>
                         <td class="right"><?php foreach ($product['action'] as $action) { ?>
                           <a class="badge bg-green" href="<?php echo $action['href']; ?>" target="_blank"><?php echo $action['text']; ?></a>
-                          <?php } ?></td>
+                          <?php } ?>
+                          <a onclick="confirm('Apakah anda yakin ingin menghapus harga terendah ini?') ? location = 'index.php?route=catalog/productterendah/deletehargaterendah&token=<?php echo $token; ?>&id=<?php echo $product['id']; ?>&filter_gudang_id=<?php echo $filter_gudang_id; ?>&date=<?php echo $date; ?>&t=1' : false;" class="badge bg-red" title="Hapus Harga"><i class="fa fa-trash"></i> Hapus</a>
+                        </td>
                       </tr>
                       <?php } ?>
                       <?php } else { ?>

@@ -209,7 +209,7 @@
                 <table class="table table-bordered" id="MyTable">
                     <thead>
                       <tr>
-                          <th>Tgl SO</th>
+                          <th>Tgl Penawaran</th>
                           <th>Tgl Inv</th>
                           <th>Tgl Lunas</th>
                           <th>Nama Sales</th>

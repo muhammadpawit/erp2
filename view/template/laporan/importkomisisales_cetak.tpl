@@ -7,7 +7,7 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                 <table border="1" style="border-collapse:collapse">
                     <thead>
                       <tr>
-                          <th>Tgl SO</th>
+                          <th>Tgl Penawaran</th>
                           <th>Tgl Inv</th>
                           <th>Tgl Lunas</th>
                           <th>Nama Sales</th>
