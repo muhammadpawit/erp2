@@ -59,6 +59,61 @@ class ControllerCatalogProductTerendah extends Controller {
 			$this->redirect($this->url->link('catalog/productterendah', 'token=' . $this->session->data['token'] . $url, 'SSL'));
 		}
 	}
+
+	public function deleteperiode(){
+		$this->load->model('gudang/product');
+		if (isset($this->request->get['filter_gudang_id']) && isset($this->request->get['date'])) {
+			$this->model_gudang_product->deleteperiode($this->request->get['filter_gudang_id'], $this->request->get['date']);
+			$this->session->data['success'] = 'Periode Harga Terendah berhasil dihapus';
+		}
+		
+		$url = '';
+		if (isset($this->request->get['filter_gudang_id'])) {
+			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
+		}
+		
+		$this->redirect($this->url->link('catalog/productterendah', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+	}
+
+	public function deletehargaterendah(){
+		$this->load->model('gudang/product');
+		if (isset($this->request->get['id'])) {
+			$this->model_gudang_product->deletehargaterendah($this->request->get['id']);
+			$this->session->data['success'] = 'Harga Terendah berhasil dihapus';
+		}
+		
+		$url = '';
+		if (isset($this->request->get['filter_gudang_id'])) {
+			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
+		}
+		if (isset($this->request->get['date'])) {
+			$url .= '&date=' . $this->request->get['date'];
+		}
+		if (isset($this->request->get['t'])) {
+			$url .= '&t=' . $this->request->get['t'];
+		}
+		
+		$this->redirect($this->url->link('catalog/productterendah', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+	}
+
+	public function deleteproductgudang(){
+		$this->load->model('gudang/product');
+		if (isset($this->request->get['product_id']) && isset($this->request->get['filter_gudang_id'])) {
+			$this->model_gudang_product->deleteproductgudang($this->request->get['product_id'], $this->request->get['filter_gudang_id']);
+			$this->session->data['success'] = 'Produk berhasil dihapus dari daftar gudang';
+		}
+		
+		$url = '';
+		if (isset($this->request->get['filter_gudang_id'])) {
+			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
+		}
+		if (isset($this->request->get['date'])) {
+			$url .= '&date=' . $this->request->get['date'];
+		}
+		
+		$this->redirect($this->url->link('catalog/productterendah', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+	}
+
 	// end baru
 	// baru 29 Mei 2020
 	public function edittable(){
@@ -1555,6 +1610,17 @@ class ControllerCatalogProductTerendah extends Controller {
 		$this->data['filter_urutkan']=$filter_urutkan;
 		$this->data['filter_status']=$filter_status;
 		$this->data['date']=$date;
+
+		if (!empty($filter_gudang_id)) {
+			$gudang_info = $this->model_catalog_gudang->getGudang($filter_gudang_id);
+			if ($gudang_info) {
+				$this->data['gudang_name'] = $gudang_info['nama'];
+			} else {
+				$this->data['gudang_name'] = '';
+			}
+		} else {
+			$this->data['gudang_name'] = '';
+		}
 		
 		$this->data['cetak'] =$this->url->link('catalog/productterendah/exporttoexcel', 'token=' . $this->session->data['token'] . $url , 'SSL');
 

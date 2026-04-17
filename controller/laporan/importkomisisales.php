@@ -2362,97 +2362,36 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		$results=array();
 		//$results=$this->model_import_komisisales->GetImport(array());
 		$import=$this->model_import_komisisales->GetImportGroup($filter);
-		$importAll=$this->model_import_komisisales->GetImportGroup($filterall);
 		$this->data['saless']=$this->db->query("SELECT * FROM namasales WHERE hapus=0 ORDER BY namasales ASC ")->rows;
 		
-		$nilaiivs=0;
-		$tot=0;
-		$sat=array();
-		$nomorinvoice=array();
-		$totivs=0;
-		$harga_terendah=0;
-		$poin=0;
-		$biayatransport=0;
-		$products=array();
-		$totalhargaterendah=0;
-		$biayatransport=0;
 		foreach($import as $im){
-			$get=$this->model_import_komisisales->Get($im['nomorinvoice']);
 			$res=$this->model_import_komisisales->GetImportdetails($im['nomorinvoice']);
-			$totivs=$this->model_import_komisisales->sumIvs($get['nomorinvoice']);
+			$totivs=$im['total_ivs'];
 			
-			if($get['pengiriman']==1){
-				if(strtoupper($get['kodecustomer'])=='20-10-C-0055' OR strtoupper($get['kodecustomer'])=='20-11-C-0065' OR strtoupper($im['kodecustomer'])=='20-10-C-0004' OR strtoupper($get['kodecustomer'])=='20-10-C-0224' OR strtoupper($get['kodecustomer'])=='20-11-C-0035' OR strtoupper($get['kodecustomer'])=='00010710-00004' OR strtoupper($get['kodecustomer'])=='00010707-00002' OR strtoupper($get['kodecustomer'])=='00010707-00003' OR strtoupper($get['kodecustomer'])=='00010710-00005'){
+			$biayatransport = 0;
+			if($im['pengiriman']==1){
+				$bypass_customers = array('20-10-C-0055', '20-11-C-0065', '20-10-C-0004', '20-10-C-0224', '20-11-C-0035', '00010710-00004', '00010707-00002', '00010707-00003', '00010710-00005');
+				if(in_array(strtoupper($im['kodecustomer']), $bypass_customers)){
 				  $biayatransport=0;
 				}else{
-				  if($get['gudang_id']==1){
-					$biayatransport=350000;
-				  }else{
-					$biayatransport=250000;
-				  }
+				  $biayatransport = ($im['gudang_id']==1) ? 350000 : 250000;
 				}
-			}else if($get['pengiriman']==3){
+			}else if($im['pengiriman']==3){
 				$biayatransport=50000; // diantar kurir nisson
-			}else{
-				$biayatransport=0;
 			}
 
 			$this->data['penjualans'][]=array(
-				'product_id'=>0,
-				'tglinvoice'=>$get['tglinvoice'],
-				'tgllunas'=>$get['tgllunas'],
-				'tglso'=>0,
-				'namasales'=>0,
-				'kodecustomer'=>$get['kodecustomer'],
-				'namacustomer'=>$get['namacustomer'],
-				'namabarang'=>0,
-				'qty'=>0,
-				'hargasatuan'=>$this->currency->format(0),
-				'totalhargaterendah'=>$this->currency->format($totalhargaterendah),
-				'biayatransport'=>$this->currency->format(0),
-				'poin'=>0,
-				'nomorinvoice'=>$get['nomorinvoice'],
-				'metodepembayaran'=>0,
-				'status'=>0,
-				'ivs'=>$this->currency->format(0),
-				'kodebarang'=>0,
-				'total'=>$totivs,
-				'bkirim'=>$biayatransport,
-				'products'=>$res,
-				'customerbaru'=>$get['customerbaru'],
-			);	
-		}
-		$is=0;
-		//$is=$this->model_import_komisisales->sum($filter);
-		//$this->data['is']=$this->currency->format($is);
-		foreach($importAll as $im){
-			$res=$this->model_import_komisisales->GetImportdetails($im['nomorinvoice']);
-			$totivs=$this->model_import_komisisales->sumIvs($im['nomorinvoice']);
-			if($im['pengiriman']==1){
-				if(strtoupper($im['kodecustomer'])=='20-10-C-0055' OR strtoupper($im['kodecustomer'])=='20-11-C-0065' OR strtoupper($im['kodecustomer'])=='20-10-C-0004' OR strtoupper($im['kodecustomer'])=='20-10-C-0224' OR strtoupper($im['kodecustomer'])=='20-11-C-0035'){
-				  $biayatransport=0;
-				}else{
-				  if($im['gudang_id']==1){
-					$biayatransport=350000;
-				  }else{
-					$biayatransport=250000;
-				  }
-				}
-				
-			  }else{
-				$biayatransport=0;
-			  }
-			$this->data['penjualansAll'][]=array(
 				'product_id'=>0,
 				'tglinvoice'=>$im['tglinvoice'],
 				'tgllunas'=>$im['tgllunas'],
 				'tglso'=>0,
 				'namasales'=>0,
+				'kodecustomer'=>$im['kodecustomer'],
 				'namacustomer'=>$im['namacustomer'],
 				'namabarang'=>0,
 				'qty'=>0,
 				'hargasatuan'=>$this->currency->format(0),
-				'totalhargaterendah'=>$this->currency->format($totalhargaterendah),
+				'totalhargaterendah'=>$this->currency->format(0),
 				'biayatransport'=>$this->currency->format(0),
 				'poin'=>0,
 				'nomorinvoice'=>$im['nomorinvoice'],
@@ -2463,9 +2402,11 @@ class ControllerLaporanImportKomisiSales extends Controller {
 				'total'=>$totivs,
 				'bkirim'=>$biayatransport,
 				'products'=>$res,
+				'customerbaru'=>$im['customerbaru'],
 			);	
-			$is+=($totivs);
 		}
+		
+		$is = $this->model_import_komisisales->sum($filterall);
 		$this->data['is']=$this->currency->format($is);
 		//echo "<pre>";print_r($this->data['penjualansAll']);exit;
 		$this->load->model('localisation/country');

@@ -28,13 +28,18 @@ class ModelImportKomisiSales extends Model {
   }
 
   public function sum($data){
-    $sql="SELECT sum(qty*hargasatuan) as total FROM inv_komisi_sales WHERE id>0 AND namasales<>'' ";
+    $sql="SELECT sum(qty*hargasatuan) as total FROM inv_komisi_sales WHERE id>0 AND namasales<>'' AND hapus=0 ";
     if(!empty($data['tanggal'])){
       $sql.=" AND DATE(tglinvoice) BETWEEN '".$data['tanggal']."' AND '".$data['tanggal2']."' ";
     }
     if(!empty($data['filter_sales'])){
-      //$sql .= " AND lower(namasales) LIKE '%" . $this->db->escape(utf8_strtolower($data['filter_sales'])) . "%'";
-      $sql .= " AND sales_id='" . $this->db->escape(utf8_strtolower($data['filter_sales'])) . "'";
+      $sql .= " AND sales_id='" . $this->db->escape($data['filter_sales']) . "'";
+    }
+    if(!empty($data['filter_status'])){
+      $sql .= " AND status='" . $this->db->escape($data['filter_status']) . "'";
+    }
+    if(!empty($data['filter_gudang_id'])){
+      $sql .= " AND gudang_id='" . $this->db->escape($data['filter_gudang_id']) . "'";
     }
     $d=$this->db->query($sql);
     return $d->row['total'];
@@ -84,28 +89,33 @@ class ModelImportKomisiSales extends Model {
   }
 
   public function GetImportdetails($id){
-    $nilaiivs=0;
     $products=array();
-    $sql=" SELECT * FROM inv_komisi_sales WHERE nomorinvoice='$id' and hapus=0 ";
+    // Optimized: Combine invoice items with latest harga_terendah and poin in one query
+    $sql=" SELECT i.*, 
+      (SELECT harga_terendah FROM harga_terendah_new h 
+       WHERE h.gudang = i.gudang_id AND h.kodebarang = i.kodebarang AND h.tgl_berlaku <= i.tglso::date
+       ORDER BY h.tgl_berlaku DESC LIMIT 1) as lookup_harga_terendah,
+      (SELECT poin FROM product_baru p 
+       WHERE p.kodebarang = i.kodebarang ORDER BY p.id DESC LIMIT 1) as lookup_poin
+    FROM inv_komisi_sales i 
+    WHERE i.nomorinvoice='" . $this->db->escape($id) . "' and i.hapus=0 ";
+    
     $d=$this->db->query($sql);
     $res = $d->rows;
     foreach ($res as $result) {
-      $harga_terendah=$this->model_import_komisisales->gethargaterendah($result['tglso'],$result['gudang_id'],$result['kodebarang']);
-      $poin=$this->model_import_komisisales->getpoin($result['kodebarang']);
+      $harga_terendah = $result['lookup_harga_terendah'] ? $result['lookup_harga_terendah'] : 0;
+      $poin = $result['lookup_poin'] ? $result['lookup_poin'] : 0;
+      
+      $biayatransport = 0;
       if($result['pengiriman']==1){
-        if(strtoupper($result['kodecustomer'])=='20-10-C-0055' OR strtoupper($result['kodecustomer'])=='20-11-C-0065' OR strtoupper($result['kodecustomer'])=='20-10-C-0004' OR strtoupper($result['kodecustomer'])=='20-10-C-0224' OR strtoupper($result['kodecustomer'])=='20-11-C-0035'){
+        $bypass_customers = array('20-10-C-0055', '20-11-C-0065', '20-10-C-0004', '20-10-C-0224', '20-11-C-0035');
+        if(in_array(strtoupper($result['kodecustomer']), $bypass_customers)){
           $biayatransport=0;
         }else{
-          if($result['gudang_id']==1){
-            $biayatransport=350000;
-          }else{
-            $biayatransport=250000;
-          }
+          $biayatransport = ($result['gudang_id']==1) ? 350000 : 250000;
         }
-        
-      }else{
-        $biayatransport=0;
       }
+      
       $products[]=array(
         'product_id'=>$result['kodebarang'],
         'tglinvoice'=>$result['tglinvoice'],
@@ -116,18 +126,16 @@ class ModelImportKomisiSales extends Model {
         'namacustomer'=>$result['namacustomer'],
         'namabarang'=>$result['namabarang'],
         'qty'=>$result['qty'],
-        'hargasatuan'=>($result['hargasatuan']),
-        'harga_terendah'=>($harga_terendah),
+        'hargasatuan'=>$result['hargasatuan'],
+        'harga_terendah'=>$harga_terendah,
         'totalhargaterendah'=>$harga_terendah*$result['qty'],
-        'biayatransport'=>($biayatransport),
+        'biayatransport'=>$biayatransport,
         'poin'=>$poin,
-        'nomorinvoice'=>$result['nomorinvoice'],
         'metodepembayaran'=>$result['metodepembayaran'],
         'status'=>$result['status'],
-        'ivs'=>($nilaiivs),
+        'ivs'=>0,
         'kodebarang'=>$result['kodebarang'],
         'pengiriman'=>$result['pengiriman'],
-        //'total'=>$this->currency->format($totivs),
       );
     }
     return $products;
@@ -147,26 +155,32 @@ class ModelImportKomisiSales extends Model {
 
   public function GetImportdetailsCompare($id){
     $products=array();
-    $sql=" SELECT * FROM inv_komisi_sales_compare WHERE nomorinvoice='$id' and hapus=0 ";
+    // Optimized: Combine invoice items with latest harga_terendah and poin in one query
+    $sql=" SELECT i.*, 
+      (SELECT harga_terendah FROM harga_terendah_new h 
+       WHERE h.gudang = i.gudang_id AND h.kodebarang = i.kodebarang AND h.tgl_berlaku <= i.tglso::date
+       ORDER BY h.tgl_berlaku DESC LIMIT 1) as lookup_harga_terendah,
+      (SELECT poin FROM product_baru p 
+       WHERE p.kodebarang = i.kodebarang ORDER BY p.id DESC LIMIT 1) as lookup_poin
+    FROM inv_komisi_sales_compare i 
+    WHERE i.nomorinvoice='" . $this->db->escape($id) . "' and i.hapus=0 ";
+    
     $d=$this->db->query($sql);
     $res = $d->rows;
     foreach ($res as $result) {
-      $harga_terendah=$this->model_import_komisisales->gethargaterendah($result['tglso'],$result['gudang_id'],$result['kodebarang']);
-      $poin=$this->model_import_komisisales->getpoin($result['kodebarang']);
+      $harga_terendah = $result['lookup_harga_terendah'] ? $result['lookup_harga_terendah'] : 0;
+      $poin = $result['lookup_poin'] ? $result['lookup_poin'] : 0;
+      
+      $biayatransport = 0;
       if($result['pengiriman']==1){
-        if(strtoupper($result['kodecustomer'])=='20-10-C-0055' OR strtoupper($result['kodecustomer'])=='20-11-C-0065' OR strtoupper($result['kodecustomer'])=='20-10-C-0004' OR strtoupper($result['kodecustomer'])=='20-10-C-0224' OR strtoupper($result['kodecustomer'])=='20-11-C-0035'){
+        $bypass_customers = array('20-10-C-0055', '20-11-C-0065', '20-10-C-0004', '20-10-C-0224', '20-11-C-0035');
+        if(in_array(strtoupper($result['kodecustomer']), $bypass_customers)){
           $biayatransport=0;
         }else{
-          if($result['gudang_id']==1){
-            $biayatransport=350000;
-          }else{
-            $biayatransport=250000;
-          }
+          $biayatransport = ($result['gudang_id']==1) ? 350000 : 250000;
         }
-        
-      }else{
-        $biayatransport=0;
       }
+      
       $products[]=array(
         'product_id'=>$result['kodebarang'],
         'tglinvoice'=>$result['tglinvoice'],
@@ -185,10 +199,9 @@ class ModelImportKomisiSales extends Model {
         'nomorinvoice'=>$result['nomorinvoice'],
         'metodepembayaran'=>$result['metodepembayaran'],
         'status'=>$result['status'],
-        'ivs'=>$this->currency->format($nilaiivs),
+        'ivs'=>$this->currency->format(0),
         'kodebarang'=>$result['kodebarang'],
         'pengiriman'=>$result['pengiriman'],
-        //'total'=>$this->currency->format($totivs),
       );
     }
     return $products;
@@ -239,39 +252,33 @@ class ModelImportKomisiSales extends Model {
   }
 
   public function GetImportGroup($data){    
-    //$sql="SELECT DISTINCT nomorinvoice,tglinvoice,tglso FROM inv_komisi_sales WHERE id>0 AND hapus=0 ";
-    $sql="SELECT DISTINCT nomorinvoice,tglinvoice FROM inv_komisi_sales WHERE id>0 AND hapus=0 ";
+    $sql="SELECT nomorinvoice, tglinvoice, tgllunas, kodecustomer, namacustomer, customerbaru, pengiriman, gudang_id, kota, provinsi, 
+          SUM(hargasatuan * qty) as total_ivs 
+          FROM inv_komisi_sales 
+          WHERE id>0 AND hapus=0 ";
+          
     if(!empty($data['tanggal'])){
       $sql.=" AND DATE(tglinvoice) BETWEEN '".$data['tanggal']."' AND '".$data['tanggal2']."' ";
     }
     if(!empty($data['filter_sales'])){
-      $sql .= " AND sales_id='" . $this->db->escape(utf8_strtolower($data['filter_sales'])) . "'";
+      $sql .= " AND sales_id='" . $this->db->escape($data['filter_sales']) . "'";
     }
-
     if(!empty($data['filter_status'])){
-      //$sql .= " AND lower(status) LIKE '%" . $this->db->escape(utf8_strtolower($data['filter_status'])) . "%'";
-      $sql .= " AND status='" . $this->db->escape(utf8_strtolower($data['filter_status'])) . "'";
+      $sql .= " AND status='" . $this->db->escape($data['filter_status']) . "'";
     }
-
     if(!empty($data['filter_gudang_id'])){
-      $sql .= " AND gudang_id='" . $this->db->escape(utf8_strtolower($data['filter_gudang_id'])) . "'";
+      $sql .= " AND gudang_id='" . $this->db->escape($data['filter_gudang_id']) . "'";
     }
 
+    $sql.=" GROUP BY nomorinvoice, tglinvoice, tgllunas, kodecustomer, namacustomer, customerbaru, pengiriman, gudang_id, kota, provinsi";
     $sql.=" ORDER BY tglinvoice ASC";
-    //$sql.=" ORDER BY tglso ASC";
+    
     if (isset($data['start']) || isset($data['limit'])) {
-      if ($data['start'] < 0) {
-      $data['start'] = 0;
-      }
-
-      if ($data['limit'] < 1) {
-      $data['limit'] = 20;
-      }
-
+      if ($data['start'] < 0) { $data['start'] = 0; }
+      if ($data['limit'] < 1) { $data['limit'] = 20; }
       $sql .= " LIMIT " . (int)$data['limit'] . " OFFSET " . (int)$data['start'];
     }
     $d=$this->db->query($sql);
-
     return $d->rows;
   }
 

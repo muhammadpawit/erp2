@@ -46,7 +46,7 @@ class ModelGudangProduct extends Model {
 	public function gettglterakhir($gudang_id){
 		$sql="SELECT date FROM harga_terendah WHERE gudang_id='$gudang_id' GROUP BY date ORDER BY date DESC LIMIT 1 ";
 		$query=$this->db->query($sql);
-		return $query->row['date'];
+		return isset($query->row['date']) ? $query->row['date'] : date('Y-m-d');
 	}
 
 	//end baru
@@ -87,6 +87,18 @@ class ModelGudangProduct extends Model {
 		$sql="SELECT DISTINCT date FROM harga_terendah WHERE gudang_id='$gudang_id' and hapus=0 ORDER BY date DESC ";
 		$d= $this->db->query($sql);
 		return $d->rows;
+	}
+
+	public function deleteperiode($gudang_id, $date){
+		$this->db->query("UPDATE harga_terendah SET hapus = 1 WHERE gudang_id = '" . (int)$gudang_id . "' AND date = '" . $this->db->escape($date) . "'");
+	}
+
+	public function deletehargaterendah($id) {
+		$this->db->query("UPDATE harga_terendah SET hapus = 1 WHERE id = '" . (int)$id . "'");
+	}
+
+	public function deleteproductgudang($product_id, $gudang_id) {
+		$this->db->query("UPDATE product_gudang SET status = 0 WHERE product_id = '" . (int)$product_id . "' AND gudang_id = '" . (int)$gudang_id . "'");
 	}
 	// baru 5 Maret 2020
 	public function daftarhargaterendah($data){
