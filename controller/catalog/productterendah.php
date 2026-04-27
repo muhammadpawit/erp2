@@ -10,22 +10,24 @@ class ControllerCatalogProductTerendah extends Controller {
 			if(isset($data['set'])){
 				foreach($data['set'] as $p){
 					if($p['harga_terendah']>0){
-						$insert=array(
-							'product_id'=>$p['product_id'],
-							'gudang_id'=>$p['gudang_id'],
-							'harga_terendah'=>$p['harga_terendah'],
-							'date'=>$p['date'],
-							'hapus'=>0,
-							'name'=>$p['name'],
-							'poin'=>str_replace(',','.',$p['poin']),
+						$insert_data = array(
+							'product_id' => $p['product_id'],
+							'gudang_id'  => $p['gudang_id'],
+							'product_special' => array(
+								array(
+									'harga_terendah' => $p['harga_terendah'],
+									'date'           => $p['date'],
+									'poin'           => str_replace(',','.',$p['poin'])
+								)
+							)
 						);
-						$this->db->insert('harga_terendah',$insert);
+						$this->model_gudang_product->addhargaterendah($insert_data);
 					}
 				}
 			}
 			$this->session->data['success'] = 'Harga Terendah produk berhasil diperbarui';
 
-			$url = '';
+			$url='';
 
 			if (isset($this->request->get['filter_gudang_id'])) {
 				$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -52,7 +54,13 @@ class ControllerCatalogProductTerendah extends Controller {
 				$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
 			}
 
-			if (isset($this->request->get['page'])) {
+			if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
+		if (isset($this->request->get['page'])) {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
@@ -62,12 +70,13 @@ class ControllerCatalogProductTerendah extends Controller {
 
 	public function deleteperiode(){
 		$this->load->model('gudang/product');
+		$url='';
 		if (isset($this->request->get['filter_gudang_id']) && isset($this->request->get['date'])) {
 			$this->model_gudang_product->deleteperiode($this->request->get['filter_gudang_id'], $this->request->get['date']);
 			$this->session->data['success'] = 'Periode Harga Terendah berhasil dihapus';
 		}
 		
-		$url = '';
+
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
 		}
@@ -77,12 +86,13 @@ class ControllerCatalogProductTerendah extends Controller {
 
 	public function deletehargaterendah(){
 		$this->load->model('gudang/product');
+		$url='';
 		if (isset($this->request->get['id'])) {
 			$this->model_gudang_product->deletehargaterendah($this->request->get['id']);
 			$this->session->data['success'] = 'Harga Terendah berhasil dihapus';
 		}
 		
-		$url = '';
+
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
 		}
@@ -98,12 +108,13 @@ class ControllerCatalogProductTerendah extends Controller {
 
 	public function deleteproductgudang(){
 		$this->load->model('gudang/product');
+		$url='';
 		if (isset($this->request->get['product_id']) && isset($this->request->get['filter_gudang_id'])) {
 			$this->model_gudang_product->deleteproductgudang($this->request->get['product_id'], $this->request->get['filter_gudang_id']);
 			$this->session->data['success'] = 'Produk berhasil dihapus dari daftar gudang';
 		}
 		
-		$url = '';
+
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
 		}
@@ -119,7 +130,7 @@ class ControllerCatalogProductTerendah extends Controller {
 	public function edittable(){
 		//echo $this->request->post['id'];exit();
 		if(isset($this->request->get['column'])){
-			$this->db->update('harga_terendah',array($this->request->get['column']=>$this->request->post['harga_terendah']),array('id'=>$this->request->post['id']));
+			$this->db->update('harga_terendah_new',array($this->request->get['column']=>$this->request->post['harga_terendah']),array('id'=>$this->request->post['id']));
 		}else{
 			echo "Tidak bisa diedit";
 		}
@@ -132,7 +143,7 @@ class ControllerCatalogProductTerendah extends Controller {
 	}
 	public function set(){
 		if(isset($this->request->get['filter_gudang_id'])){
-			$gudang_id=$this->request->get['filter_gudang_id'];
+			$filter_gudang_id=$this->request->get['filter_gudang_id'];
 			//$this->xlscreation_directtanggal();
 			$this->document->setTitle('Stok per Gudang');
 
@@ -184,6 +195,12 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_status = null;
 		}
 
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
 		if (isset($this->request->get['page'])) {
 			$page = $this->request->get['page'];
 		} else {
@@ -197,6 +214,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			}
 
 		}*/
+		$url='';
 
 		if (isset($this->request->get['filter_urutkan'])) {
 			$filter_urutkan = $this->request->get['filter_urutkan'];
@@ -204,7 +222,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_urutkan = '3';
 		}
 
-		$url = '';
+
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -239,6 +257,12 @@ class ControllerCatalogProductTerendah extends Controller {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
 		}
 
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
 		if (isset($this->request->get['page'])) {
 			$url .= '&page=' . $this->request->get['page'];
 		}
@@ -259,21 +283,23 @@ class ControllerCatalogProductTerendah extends Controller {
 			$data=$this->request->post;
 			if(isset($data['products'])){
 				foreach($data['products'] as $p){
-					$insert=array(
-						'product_id'=>$p['product_id'],
-						'gudang_id'=>$p['gudang_id'],
-						'harga_terendah'=>$p['harga'],
-						'date'=>$data['date'],
-						'hapus'=>0,
-						'name'=>$p['name'],
-						'poin'=>str_replace(',','.',$p['poin']),
+					$insert_data = array(
+						'product_id' => $p['product_id'],
+						'gudang_id'  => $p['gudang_id'],
+						'product_special' => array(
+							array(
+								'harga_terendah' => $p['harga'],
+								'date'           => $data['date'],
+								'poin'           => str_replace(',','.',$p['poin'])
+							)
+						)
 					);
-					$this->db->insert('harga_terendah',$insert);
+					$this->model_gudang_product->addhargaterendah($insert_data);
 				}
 			}
 			$this->session->data['success'] = 'Harga Terendah produk berhasil diperbarui';
 
-			$url = '';
+	
 
 			if (isset($this->request->get['filter_gudang_id'])) {
 				$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -300,7 +326,13 @@ class ControllerCatalogProductTerendah extends Controller {
 				$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
 			}
 
-			if (isset($this->request->get['page'])) {
+			if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
+		if (isset($this->request->get['page'])) {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
@@ -362,10 +394,10 @@ class ControllerCatalogProductTerendah extends Controller {
 				'gudang_id'   => $gudang['nama'],
 				'name'   => $result['name'],
 				'product_id'   => $result['product_id'],
-				'harga'   =>$hargarendah['harga_terendah']==null?0:$hargarendah['harga_terendah'], // harga sudah termasuk Ppn
+				'harga'   => (isset($hargarendah['harga_terendah']) && $hargarendah['harga_terendah'] != null) ? $hargarendah['harga_terendah'] : 0, 
 				'hargatanpaformat'   =>0,
 				'date'  => date('d/m/Y',strtotime($date)),
-				'poin'=>$hargarendah['poin']==null?0:$hargarendah['poin'],
+				'poin'=>(isset($hargarendah['poin']) && $hargarendah['poin'] != null) ? $hargarendah['poin'] : 0,
 				'action'	=> $action
 
 			);
@@ -383,8 +415,8 @@ class ControllerCatalogProductTerendah extends Controller {
 		$this->data['token'] = $this->session->data['token'];
 
 
+		$url='';
 
-		$url = '';
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
 
@@ -463,60 +495,59 @@ class ControllerCatalogProductTerendah extends Controller {
 	// baru 4 Maret 2020
 	public function uploadexcel(){
 		$allowedFileType = ['application/vnd.ms-excel','text/xls','text/xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-		$d=array();
-		$a=1;
+		
 		if(in_array($_FILES["file"]["type"],$allowedFileType)){
-	  
 			  $targetPath = DIR_SYSTEM.'uploads/'.$_FILES['file']['name'];
 			  move_uploaded_file($_FILES['file']['tmp_name'], $targetPath);
 			  
 			  $Reader = new SpreadsheetReader($targetPath);
 			  
+			  $this->load->model('catalog/gudang');
+			  $this->load->model('gudang/product');
+			  
+			  // Fetch all warehouses once for fast lookup
+			  $gudangs = $this->model_catalog_gudang->getGudangs();
+			  $gudang_map = array();
+			  foreach ($gudangs as $g) {
+				  $gudang_map[strtolower(trim($g['nama']))] = $g['gudang_id'];
+			  }
+
 			  $sheetCount = count($Reader->sheets());
 			  for($i=0;$i<$sheetCount;$i++)
 			  {
-				  
 				  $Reader->ChangeSheet($i);
-				  
+				  $a = 1;
 				  foreach ($Reader as $Row)
 				  {
-					  if($a>1){
-						
-						if(strtolower($Row[2])=="tangerang"){
-							$gudang_id=1;
-						}
-						if(strtolower($Row[2])=="surabaya"){
-							$gudang_id=3;
-						}
-						  $d=array(
-							  'product_id' =>$Row[0],
-							  'name' =>$Row[1],
-							  'gudang_id'=>$gudang_id,
-							  'harga_terendah'=>$Row[3],
-							  'date'=>$Row[4],
-							  'poin'=>str_replace(',','.',$Row[5]),
-						  );
-						  if($this->user->getUsername()=="pawit"){
-							$this->db->insert('harga_terendah_coba',$d);
-						  }else{
-							$this->db->insert('harga_terendah',$d);
+					  if($a > 1 && !empty($Row[0])){
+						  $g_name = strtolower(trim($Row[2]));
+						  $gudang_id = isset($gudang_map[$g_name]) ? $gudang_map[$g_name] : 0;
+						  
+						  if ($gudang_id > 0) {
+							  $insert_data = array(
+								  'product_id' => $Row[0],
+								  'gudang_id'  => $gudang_id,
+								  'product_special' => array(
+									  array(
+										  'harga_terendah' => (float)$Row[3],
+										  'date'           => $Row[4],
+										  'poin'           => str_replace(',','.',$Row[5])
+									  )
+								  )
+							  );
+							  $this->model_gudang_product->addhargaterendah($insert_data);
 						  }
-						/*$this->db->update('harga_terendah',array('poin'=>$Row[5]),array('product_id'=>$Row[0]));*/
 					  }
 					  $a++;
 				   }
 			   }
-			   //echo "<pre>";print_r($sheetCount);exit;
-		}
-		else
-		{ 
-			  $type = "error";
-			  $message = "Invalid File Type. Upload Excel File.";
+		} else { 
+			  $this->session->data['error'] = "Invalid File Type. Upload Excel File.";
 		}
 		$this->session->data['success'] = 'Harga Terendah produk berhasil diperbarui';
 
-		$url = '';
 
+		$url='';
 		if (isset($this->request->get['filter_name'])) {
 			$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
 		}
@@ -531,6 +562,12 @@ class ControllerCatalogProductTerendah extends Controller {
 
 				if (isset($this->request->get['filter_urutkan'])) {
 			$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -641,7 +678,7 @@ class ControllerCatalogProductTerendah extends Controller {
 	
 	public function cetakexcelpertanggal() {
 
-		$this->document->setTitle('Stok per Gudang');
+		$url = '';
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$filter_gudang_id = $this->request->get['filter_gudang_id'];
@@ -689,6 +726,12 @@ class ControllerCatalogProductTerendah extends Controller {
 			$url .= '&date_start=' . $this->request->get['date_start'];
 		}
 
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
 		if (isset($this->request->get['page'])) {
 			$page = $this->request->get['page'];
 		} else {
@@ -701,7 +744,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_urutkan = '3';
 		}
 
-		$url = '';
+
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -733,6 +776,12 @@ class ControllerCatalogProductTerendah extends Controller {
 			$url .= '&date_start=' . $this->request->get['date_start'];
 		}
 		
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
 		if (isset($this->request->get['page'])) {
 			$url .= '&page=' . $this->request->get['page'];
 		}
@@ -758,7 +807,7 @@ class ControllerCatalogProductTerendah extends Controller {
 		
 		$filter = 	array(
 						'tanggal'     => $date_start,
-						'gudang_id'	=> $gudang_id,
+						'gudang_id'	=> $filter_gudang_id,
 					);
 		$order_total = $this->model_gudang_product->getTotalProducts($data,true);
 
@@ -817,7 +866,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_qty = '';
 		}
 
-
+		$url='';
 		if (isset($this->request->get['filter_category_id'])) {
 			$filter_category_id = $this->request->get['filter_category_id'];
 		} else {
@@ -828,6 +877,12 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_status = $this->request->get['filter_status'];
 		} else {
 			$filter_status = null;
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -843,7 +898,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_urutkan = '3';
 		}
 
-		$url = '';
+
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -869,6 +924,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -904,7 +965,7 @@ class ControllerCatalogProductTerendah extends Controller {
 		
 		$filter = 	array(
 						'tanggal'     => $date_start,
-						'gudang_id'	=> $gudang_id,
+						'gudang_id'	=> $filter_gudang_id,
 					);
 		$order_total = $this->model_gudang_product->getTotalProducts($data,true);
 
@@ -951,7 +1012,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 
 
-		$url = '';
+
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
 
@@ -1164,11 +1225,19 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_status = null;
 		}
 
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
 		if (isset($this->request->get['page'])) {
 			$page = $this->request->get['page'];
 		} else {
 			$page = 1;
 		}
+
+		$url='';
 
 		/*if(!empty($filter_gudang_id)){
 			if(!in_array($filter_gudang_id,$this->user->getGudang())){
@@ -1184,7 +1253,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_urutkan = '3';
 		}
 
-		$url = '';
+
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -1213,6 +1282,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -1300,7 +1375,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 
 
-		$url = '';
+
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
 
@@ -1410,6 +1485,12 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_status = null;
 		}
 
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
 		if (isset($this->request->get['page'])) {
 			$page = $this->request->get['page'];
 		} else {
@@ -1430,7 +1511,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			$filter_urutkan = '3';
 		}
 
-		$url = '';
+		$url='';
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -1465,6 +1546,12 @@ class ControllerCatalogProductTerendah extends Controller {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
 		}
 
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
 		if (isset($this->request->get['page'])) {
 			$url .= '&page=' . $this->request->get['page'];
 		}
@@ -1495,35 +1582,39 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		//$order_total = $this->model_gudang_product->getTotalProducts($data,true);
 		//$results = $this->model_gudang_product->getProducts($data,true);
-		$order_total =count($this->model_gudang_product->daftarhargaterendah($data,true));
-		$results = $this->model_gudang_product->daftarhargaterendah($data,true);
+		$results_all = $this->model_gudang_product->daftarhargaterendah($data);
+		$order_total = count($results_all);
+		$results = array_slice($results_all, $data['start'], $data['limit']);
+
 		$this->load->model('user/user');
 		$sethargaterendah=$this->model_user_user->getAksesData($this->user->getId(),14);
 		$this->data['cetak'] = $this->url->link('catalog/productgudang/cetak', 'token=' . $this->session->data['token'] . $url, 'SSL');
 		$this->data['uploadex'] = $this->url->link('catalog/productterendah/uploadexcel', 'token=' . $this->session->data['token'] . $url, 'SSL');
 		$this->data['setbelum'] = $this->url->link('catalog/productterendah/setbelum', 'token=' . $this->session->data['token'] . $url, 'SSL');
-		$this->data['periode']=$periode;
+		
 		$this->load->model('catalog/gudang');
-		$this->load->model('gudang/product');
 		$this->load->model('catalog/product');
-		$freestok=0;
-		$periode=array();
+
+		// Resolve chosen warehouse name once
+		$this->data['gudang_name'] = '';
+		if ($filter_gudang_id) {
+			$g_info = $this->model_catalog_gudang->getGudang($filter_gudang_id);
+			$this->data['gudang_name'] = isset($g_info['nama']) ? $g_info['nama'] : '';
+		}
+
 		$periode = $this->model_gudang_product->getperiodeharga($filter_gudang_id==null?0:$filter_gudang_id);
 		$this->data['periode']=$periode;
 		$this->data['periodet']=array();
 		$this->data['products']=array();
 		$this->data['pdr']=array();
+
 		if(!empty($filter_gudang_id)){
 			$this->data['tglterakhir']=$this->model_gudang_product->gettglterakhir($filter_gudang_id);
-			$tgltr=$this->model_gudang_product->gettglterakhir($filter_gudang_id);
+			$tgltr = $this->data['tglterakhir'];
 			$this->data['pdr']=$this->model_gudang_product->getprodukbelumsetharga($filter_gudang_id,$tgltr);
 		}
-		if($this->user->getUsername()=="pawitx"){
-			$p=$this->model_gudang_product->getprodukbelumsetharga(1,$tgltr);
-			echo "<pre>";print_r($tgltr);exit;
-		}
+
 		foreach ($results as $result) {
-			$gudang = $this->model_catalog_gudang->getGudang($result['gudang_id']);
 			$action = array();
 			$action[] = array(
 				'text' => 'History Harga Terendah',
@@ -1531,7 +1622,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			);
       		$this->data['products'][] = array(
 				'id'   => $result['id'],
-				'gudang_id'   => $gudang['nama'],
+				'gudang_id'   => $result['gudang_nama'],
 				'name'   => $result['name'],
 				'product_id'   => $result['product_id'],
 				'harga'   => $this->currency->format($result['harga_terendah']), // harga sudah termasuk Ppn
@@ -1539,9 +1630,7 @@ class ControllerCatalogProductTerendah extends Controller {
 				'date'  => date('d/m/Y',strtotime($result['date'])),
 				'poin'=>$result['poin'],
 				'action'	=> $action
-
 			);
-
 		}
 
 		//$this->data['products']=sort($results);
@@ -1556,7 +1645,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 
 
-		$url = '';
+
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
 
@@ -1652,6 +1741,8 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		$url = '';
 
+
+
 		if (isset($this->request->get['filter_name'])) {
 			$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
 		}
@@ -1666,6 +1757,12 @@ class ControllerCatalogProductTerendah extends Controller {
 
 				if (isset($this->request->get['filter_urutkan'])) {
 			$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -1821,7 +1918,7 @@ class ControllerCatalogProductTerendah extends Controller {
 				'nama'   => $result['nama'],
 				'options'     => $this->model_gudang_product->getOptionGudang($result['product_id'],$result['gudang_id']),
 				'qty'   => $result['quantity'],
-				'status'	=> $status
+				'status'	=> $result['status']
 
 			);
 			//print_r($this->model_catalog_product->getProductOptionsGudang($result['product_id'],$result['gudang_id']));
@@ -1851,6 +1948,10 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		$this->document->setTitle('Input Stok Awal produk Gudang');
 
+		$url = '';
+
+
+
 		if (isset($this->request->get['product_id'])) {
 				$product_id=$this->request->get['product_id'];
 			}
@@ -1869,7 +1970,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			$this->model_gudang_product->addStokAwal($this->request->post);
 		  	$this->session->data['success'] = 'Success: Stok berhasil ditambahkan.';
 
-				$url = '';
+		
 
 				if (isset($this->request->get['filter_name'])) {
 					$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
@@ -1887,13 +1988,19 @@ class ControllerCatalogProductTerendah extends Controller {
 					$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
 				}
 
-				if (isset($this->request->get['page'])) {
+				if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
+		if (isset($this->request->get['page'])) {
 					$url .= '&page=' . $this->request->get['page'];
 				}
 				$this->redirect($this->url->link('catalog/product', 'token=' . $this->session->data['token'] . $url, 'SSL'));
     	}
 
-			$url = '';
+	
 
 			if (isset($this->request->get['filter_name'])) {
 				$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
@@ -1911,7 +2018,13 @@ class ControllerCatalogProductTerendah extends Controller {
 				$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
 			}
 
-			if (isset($this->request->get['page'])) {
+			if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
+		if (isset($this->request->get['page'])) {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
@@ -1957,6 +2070,10 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		$this->document->setTitle('Stok Gudang');
 
+		$url = '';
+
+
+
 		if (isset($this->request->get['product_gudang_id'])) {
 				$product_gudang_id=$this->request->get['product_gudang_id'];
 			}
@@ -1970,7 +2087,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			$this->model_gudang_product->editProduk($this->request->get['product_gudang_id'],$this->request->post);
 	  	$this->session->data['success'] = 'Success: Data produk gudang berhasil diperbarui.';
 
-				$url = '';
+		
 
 				if (isset($this->request->get['filter_name'])) {
 					$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
@@ -1988,13 +2105,19 @@ class ControllerCatalogProductTerendah extends Controller {
 					$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
 				}
 
-				if (isset($this->request->get['page'])) {
+				if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
+		if (isset($this->request->get['page'])) {
 					$url .= '&page=' . $this->request->get['page'];
 				}
 				$this->redirect($this->url->link('catalog/productgudang', 'token=' . $this->session->data['token'] . $url, 'SSL'));
     	}
 
-			$url = '';
+	
 
 			if (isset($this->request->get['filter_name'])) {
 				$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
@@ -2012,7 +2135,13 @@ class ControllerCatalogProductTerendah extends Controller {
 				$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
 			}
 
-			if (isset($this->request->get['page'])) {
+			if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
+		if (isset($this->request->get['page'])) {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
@@ -2082,7 +2211,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		$this->document->setTitle('Kartu Stok Produk');
 
-			$url = '';
+		$url = '';
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -2112,6 +2241,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -2264,7 +2399,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 
 
-		$url = '';
+
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -2294,6 +2429,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -2347,7 +2488,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		$this->document->setTitle('Kartu Stok Produk per Ukuran');
 
-			$url = '';
+		$url = '';
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -2373,6 +2514,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -2497,7 +2644,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 
 
-		$url = '';
+
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -2523,6 +2670,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -2736,6 +2889,8 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		$url = '';
 
+
+
 		if (isset($this->request->get['filter_name'])) {
 			$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
 		}
@@ -2750,6 +2905,12 @@ class ControllerCatalogProductTerendah extends Controller {
 
 				if (isset($this->request->get['filter_urutkan'])) {
 			$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -2824,7 +2985,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		$this->document->setTitle('History HPP');
 
-			$url = '';
+		$url = '';
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -2850,6 +3011,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -2951,7 +3118,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 
 
-		$url = '';
+
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -2977,6 +3144,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -3023,7 +3196,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		$this->document->setTitle('History HPP');
 
-			$url = '';
+		$url = '';
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -3049,6 +3222,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -3152,7 +3331,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 
 
-		$url = '';
+
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -3178,6 +3357,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -3226,7 +3411,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 		$this->document->setTitle('History HPP');
 
-			$url = '';
+		$url = '';
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -3252,6 +3437,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -3352,7 +3543,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 
 
-		$url = '';
+
 
 		if (isset($this->request->get['filter_gudang_id'])) {
 			$url .= '&filter_gudang_id=' . $this->request->get['filter_gudang_id'];
@@ -3378,6 +3569,12 @@ class ControllerCatalogProductTerendah extends Controller {
 		}
 		if (isset($this->request->get['filter_status'])) {
 			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
+
+		if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
 		}
 
 		if (isset($this->request->get['page'])) {
@@ -3422,6 +3619,7 @@ class ControllerCatalogProductTerendah extends Controller {
 
 	public function hargaterendahsave(){
 		$this->load->model('gudang/product');
+		$url='';
 		if (($this->request->server['REQUEST_METHOD'] == 'POST')) {
 			if($this->user->getUsername()=="pawits"){
 			echo "<pre>";print_r($this->request->post);exit;
@@ -3429,7 +3627,7 @@ class ControllerCatalogProductTerendah extends Controller {
 			$this->model_gudang_product->addhargaterendah($this->request->post);
 			$this->session->data['success'] = 'Success: Harga terendah berhasil ditambahkan.';
 				
-				$url = '';
+		
 
 				if (isset($this->request->get['filter_name'])) {
 					$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
@@ -3447,7 +3645,13 @@ class ControllerCatalogProductTerendah extends Controller {
 					$url .= '&filter_urutkan=' . $this->request->get['filter_urutkan'];
 				}
 
-				if (isset($this->request->get['page'])) {
+				if (isset($this->request->get['filter_option'])) {
+			$filter_option = $this->request->get['filter_option'];
+		} else {
+			$filter_option = '';
+		}
+
+		if (isset($this->request->get['page'])) {
 					$url .= '&page=' . $this->request->get['page'];
 				}
 				$this->redirect($this->url->link('catalog/productgudang', 'token=' . $this->session->data['token'] . $url, 'SSL'));

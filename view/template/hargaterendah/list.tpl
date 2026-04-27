@@ -43,7 +43,7 @@
                     <tbody>
                     <tr>
                       <td>
-                        <select style="width:100%;" name="filter_customer_id" class="form-control lokasi-pameran">
+                        <select style="width:100%;" name="filter_tanggal" class="form-control lokasi-pameran">
 
                         </select>
                       </td>
@@ -63,11 +63,12 @@
                         <th style="text-align:center !important;" rowspan="2" align="center">Tanggal Berlaku</th>
                         <th style="text-align:center !important;" rowspan="2" align="center">Kode Barang</th>
                         <th style="text-align:center !important;" rowspan="2" align="center">Nama Barang</th>
-                        <th style="text-align:center !important;" colspan="2" align="center">Harga Terendah</th>
+                        <th style="text-align:center !important;" colspan="<?php echo count($gudangs); ?>" align="center">Harga Terendah</th>
                     </tr>
                     <tr>
-                        <th style="text-align:center !important;" align="center">Tangerang</th>
-                        <th style="text-align:center !important;" align="center">Surabaya</th>
+                        <?php foreach ($gudangs as $g_name) { ?>
+                        <th style="text-align:center !important;" align="center"><?php echo $g_name; ?></th>
+                        <?php } ?>
                     </tr>
                     </thead>
                     <tbody>
@@ -79,13 +80,14 @@
                         <td><?php echo $product['tanggal']?></td>
                         <td><?php echo $product['kode']?></td>
                         <td><?php echo $product['nama']?></td>
-                        <td><?php echo $product['tangerang']?></td>
-                        <td><?php echo $product['surabaya']?></td>
+                        <?php foreach ($gudangs as $g_id => $g_name) { ?>
+                        <td><?php echo $product['prices'][$g_id]?></td>
+                        <?php } ?>
                       </tr>
                       <?php } ?>
                       <?php } else { ?>
                       <tr>
-                        <td class="center" colspan="6">Data tidak ditemukan</td>
+                        <td class="center" colspan="<?php echo (4 + count($gudangs)); ?>">Data tidak ditemukan</td>
                       </tr>
                       <?php } ?>
                     </tbody>
@@ -110,7 +112,7 @@
 </div>
 <script>
 $('.sidebar-menu').find('#menu-laporan').addClass('active');
-$('.sidebar-menu').find('#menu-laporan-followup-penagihan').addClass('active');
+$('.sidebar-menu').find('#menu-laporan-hargaterendah').addClass('active');
 //$('.sidebar-menu').find('#penerimaan-dana-hutang-lain').addClass('active');
 </script>
 <script type="text/javascript">
@@ -125,10 +127,10 @@ function filter() {
 
 	
 
-  var filter_customer_id = $('select[name=\'filter_customer_id\']').val();
+  var filter_tanggal = $('select[name=\'filter_tanggal\']').val();
 
-	if (filter_customer_id) {
-		url += '&filter_customer_id=' + encodeURIComponent(filter_customer_id);
+	if (filter_tanggal) {
+		url += '&filter_tanggal=' + encodeURIComponent(filter_tanggal);
 	}
 
 	location = url;

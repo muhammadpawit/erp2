@@ -2847,51 +2847,47 @@ class ControllerLaporanImportKomisiSales extends Controller {
 
 	public function importhargaterendahnew(){
 		$allowedFileType = ['application/vnd.ms-excel','text/xls','text/xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-		$d=array();
-		$a=1;
-		$iu=array();
+		
 		if(in_array($_FILES["file"]["type"],$allowedFileType)){
-	  
 			  $targetPath = DIR_SYSTEM.'uploads/'.$_FILES['file']['name'];
 			  move_uploaded_file($_FILES['file']['tmp_name'], $targetPath);
 			  
 			  $Reader = new SpreadsheetReader($targetPath);
 			  
+			  $this->load->model('catalog/gudang');
+			  $gudangs = $this->model_catalog_gudang->getGudangs();
+			  $gudang_map = array();
+			  foreach ($gudangs as $g) {
+				  $gudang_map[strtolower(trim($g['nama']))] = $g['gudang_id'];
+			  }
+
 			  $sheetCount = count($Reader->sheets());
 			  for($i=0;$i<$sheetCount;$i++)
 			  {
-				  
 				  $Reader->ChangeSheet($i);
-				  
+				  $a = 1;
 				  foreach ($Reader as $Row)
 				  {
-					  if($a>1){
-						
-						if(strtolower($Row[2])=="tangerang"){
-							$gudang_id=1;
-						}
-						if(strtolower($Row[2])=="surabaya"){
-							$gudang_id=3;
-						}
-						
-						if(!empty($Row[0])){
-							$d=array(
-								'kodebarang'=>$Row[0],
-								'nama'=>$Row[1],
-								'gudang'=>$gudang_id,
-								'harga_terendah'=>$Row[3],
-								'poin'=>$Row[4],
-								'tgl_berlaku' =>date('Y-m-d',strtotime($Row[5])),
-								'hapus'=>0
-							);
-							$this->db->insert('harga_terendah_new',$d);
-						}
-						/*$this->db->update('harga_terendah',array('poin'=>$Row[5]),array('product_id'=>$Row[0]));*/
+					  if($a > 1 && !empty($Row[0])){
+						  $g_name = strtolower(trim($Row[2]));
+						  $gudang_id = isset($gudang_map[$g_name]) ? $gudang_map[$g_name] : 0;
+						  
+						  if($gudang_id > 0){
+							  $d=array(
+								  'kodebarang'=>$Row[0],
+								  'nama'=>$Row[1],
+								  'gudang'=>$gudang_id,
+								  'harga_terendah'=>$Row[3],
+								  'poin'=>$Row[4],
+								  'tgl_berlaku' =>date('Y-m-d',strtotime($Row[5])),
+								  'hapus'=>0
+							  );
+							  $this->db->insert('harga_terendah_new', $d);
+						  }
 					  }
 					  $a++;
 				   }
 			   }
-			   //echo "<pre>";print_r(($d));exit;
 		}
 		else
 		{ 

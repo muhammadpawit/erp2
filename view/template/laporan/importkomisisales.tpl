@@ -1,7 +1,45 @@
 <?php echo $header; ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+.excel-preview-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 15px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    display: none;
+}
+.excel-preview-table {
+    width: 100%;
+    font-size: 11px;
+}
+.excel-preview-table th {
+    background: #f4f4f4;
+    position: sticky;
+    top: 0;
+}
+@media (min-width: 768px) {
+    .modal-lg {
+        width: 95% !important;
+    }
+}
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.7);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+</style>
 <!-- Modal -->
               <div id="myModal" class="modal fade" role="dialog">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
 
                   <!-- Modal content-->
                   <div class="modal-content">
@@ -9,16 +47,18 @@
                       <button type="button" class="close" data-dismiss="modal">&times;</button>
                       <h4 class="modal-title">Uplod file excel</h4>
                     </div>
-                    <div class="modal-body">
-                      <form action="<?php echo $uploadex ?>" method="post" name="frmExcelImport" id="frmExcelImport" enctype="multipart/form-data">
-                          <div>
-                              <label>Pilih File</label> <input type="file" name="file"
-                                  id="file" accept=".xls,.xlsx">
-                                  <br>
-                              <button type="submit" id="submit" name="import"
-                                  class="btn btn-primary btn-submit">Import</button>
-                      
-                          </div>
+                    <div class="modal-body" style="position:relative;">
+                       <div class="loading-overlay"><i class="fa fa-refresh fa-spin fa-3x"></i><br><b>Sedang memproses data...</b></div>
+                       <form action="<?php echo $uploadex ?>" method="post" name="frmExcelImport" id="frmExcelImport" enctype="multipart/form-data" onsubmit="return startLoading(this)">
+                           <div>
+                               <label>Pilih File</label> <input type="file" name="file"
+                                   id="file_penjualan" accept=".xls,.xlsx" onchange="previewExcel(this, 'preview_penjualan')">
+                                   <br>
+                               <div id="preview_penjualan" class="excel-preview-container"></div>
+                               <button type="submit" id="submit" name="import"
+                                   class="btn btn-primary btn-submit">Import</button>
+                       
+                           </div>
                       
                       </form>
                       <br>
@@ -32,7 +72,7 @@
               </div>
                   <!-- Modal -->
               <div id="hargaterendah" class="modal fade" role="dialog">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
 
                   <!-- Modal content-->
                   <div class="modal-content">
@@ -40,16 +80,18 @@
                       <button type="button" class="close" data-dismiss="modal">&times;</button>
                       <h4 class="modal-title">Uplod file excel Harga Terendah</h4>
                     </div>
-                    <div class="modal-body">
-                      <form action="<?php echo $importhargaterendahnew ?>" method="post" name="frmExcelImport" id="frmExcelImport" enctype="multipart/form-data">
-                          <div>
-                              <label>Pilih File</label> <input type="file" name="file"
-                                  id="file" accept=".xls,.xlsx">
-                                  <br>
-                              <button type="submit" id="submit" name="import"
-                                  class="btn btn-primary btn-submit">Import</button>
-                      
-                          </div>
+                    <div class="modal-body" style="position:relative;">
+                       <div class="loading-overlay"><i class="fa fa-refresh fa-spin fa-3x"></i><br><b>Sedang memproses data...</b></div>
+                       <form action="<?php echo $importhargaterendahnew ?>" method="post" name="frmExcelImport" id="frmExcelImport" enctype="multipart/form-data" onsubmit="return startLoading(this)">
+                           <div>
+                               <label>Pilih File</label> <input type="file" name="file"
+                                   id="file_hargaterendah" accept=".xls,.xlsx" onchange="previewExcel(this, 'preview_hargaterendah')">
+                                   <br>
+                               <div id="preview_hargaterendah" class="excel-preview-container"></div>
+                               <button type="submit" id="submit" name="import"
+                                   class="btn btn-primary btn-submit">Import</button>
+                       
+                           </div>
                       
                       </form>
                       <br>
@@ -64,7 +106,7 @@
 
               <!-- Modal Import Pelunasan -->
               <div id="importlunas" class="modal fade" role="dialog">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
 
                   <!-- Modal content-->
                   <div class="modal-content">
@@ -72,16 +114,18 @@
                       <button type="button" class="close" data-dismiss="modal">&times;</button>
                       <h4 class="modal-title">Uplod file </h4>
                     </div>
-                    <div class="modal-body">
-                      <form action="<?php echo $importlunas ?>" method="post" name="frmExcelImport" id="frmExcelImport" enctype="multipart/form-data">
-                          <div>
-                              <label>Pilih File</label> <input type="file" name="file"
-                                  id="file" accept=".xls,.xlsx">
-                                  <br>
-                              <button type="submit" id="submit" name="import"
-                                  class="btn btn-primary btn-submit">Import</button>
-                      
-                          </div>
+                    <div class="modal-body" style="position:relative;">
+                       <div class="loading-overlay"><i class="fa fa-refresh fa-spin fa-3x"></i><br><b>Sedang memproses data...</b></div>
+                       <form action="<?php echo $importlunas ?>" method="post" name="frmExcelImport" id="frmExcelImport" enctype="multipart/form-data" onsubmit="return startLoading(this)">
+                           <div>
+                               <label>Pilih File</label> <input type="file" name="file"
+                                   id="file_lunas" accept=".xls,.xlsx" onchange="previewExcel(this, 'preview_lunas')">
+                                   <br>
+                               <div id="preview_lunas" class="excel-preview-container"></div>
+                               <button type="submit" id="submit" name="import"
+                                   class="btn btn-primary btn-submit">Import</button>
+                       
+                           </div>
                       
                       </form>
                       <br>
@@ -661,6 +705,58 @@ function detail(id,faktur){
 
   $("#list"+id).show();
   $("#total"+id).show();
+}
+</script>
+<script>
+function previewExcel(input, targetId) {
+    var file = input.files[0];
+    var reader = new FileReader();
+    var container = $('#' + targetId);
+    
+    container.html('<i class="fa fa-spinner fa-spin"></i> Membaca file...').show();
+    
+    reader.onload = function(e) {
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, {type: 'array', cellDates: true, dateNF: 'yyyy-mm-dd'});
+        var firstSheet = workbook.SheetNames[0];
+        var worksheet = workbook.Sheets[firstSheet];
+        var jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false});
+        
+        var html = '<table class="table table-condensed table-bordered excel-preview-table">';
+        jsonData.forEach(function(row, i) {
+            html += '<tr>';
+            row.forEach(function(cell) {
+                var cellValue = cell ? cell : '';
+                if (i === 0) {
+                    html += '<th>' + cellValue + '</th>';
+                } else {
+                    html += '<td>' + cellValue + '</td>';
+                }
+            });
+            html += '</tr>';
+            if (i >= 100) return false;
+        });
+        html += '</table>';
+        if (jsonData.length > 100) {
+            html += '<p class="text-muted small">* Menampilkan 100 baris pertama...</p>';
+        }
+        container.html(html);
+    };
+    
+    if (file) {
+        reader.readAsArrayBuffer(file);
+    } else {
+        container.hide().html('');
+    }
+}
+
+function startLoading(form) {
+    var btn = $(form).find('button[type="submit"]');
+    var overlay = $(form).closest('.modal-body').find('.loading-overlay');
+    
+    btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+    overlay.css('display', 'flex');
+    return true;
 }
 </script>
 <?php echo $footer; ?>

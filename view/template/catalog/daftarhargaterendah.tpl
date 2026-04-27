@@ -183,7 +183,7 @@
                   </form>
               </div>
               <?php } ?>
-              <?php if($_REQUEST['t']!=null){?>
+              <?php if(isset($_REQUEST['t']) && $_REQUEST['t']!=null){?>
               <div class="col-md-12">
                 <table class="table table-bordered" id="myTable">
                     <thead>
