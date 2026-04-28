@@ -26,7 +26,6 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                           <th>Metode Pembayaran</th>
                           <th>Lama Bayar (Hari)</th>
                           <th>Status</th>
-                          <th>Profit Margin Bersih</th>
                           <th>Keterangan</th>
                           <th> Profit Margin Kotor Setelah Pajak </th>
                           <th> Profit Margin Bersih</th>
@@ -64,8 +63,24 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                                     $h=floor($diff / (60 * 60 * 24)) . ' '; // Umur anda dalam hitungan hari
                                   }
 
-                                  if($h>0){
-                                    $biayabungakredit = round($th*0.025/30*$h);
+                                  $mp_ori_temp = trim($prd['metodepembayaran']);
+                                  $mp_lower_temp = strtolower($mp_ori_temp);
+                                  $mp_hari_temp = 0;
+                                  if (in_array($mp_lower_temp, ['cbd', 'c.b.d', 'tunai', 'transfer', 'c.o.d', ''])) {
+                                    $mp_hari_temp = 0;
+                                  } elseif (preg_match('/net\s*(\d+)/i', $mp_lower_temp, $matches)) {
+                                    $mp_hari_temp = (int)$matches[1];
+                                  } elseif (preg_match('/\d+/', $mp_lower_temp, $matches)) {
+                                    $mp_hari_temp = (int)$matches[0];
+                                  }
+
+                                  $h_bunga = $h;
+                                  if ($prd['status'] != 1 && $mp_hari_temp > 60) {
+                                      $h_bunga = $mp_hari_temp;
+                                  }
+
+                                  if($h_bunga>0){
+                                    $biayabungakredit = round($th*0.025/30*$h_bunga);
                                   }else{
                                     $biayabungakredit=0;
                                   }
@@ -119,11 +134,10 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                               <td></td>
                               <td><?php echo $h>=0?$h:0?></td>
                               <td></td>
-                              <td style="color:<?php echo $color?>"><?php echo ($bersih);?></td>
                               <td><?php echo $p['customerbaru']=="Ya"?'Customer Baru':'';?></td>
                               <td><?php echo (round($totalprofitkotor));?></td>
                               <td><?php echo (round($bersihbaru));?></td>
-                              <td><?php echo ($bersihbaru/$th) ?></td>
+                              <td><?php echo number_format(($th != 0 ? ($bersihbaru/$th) : 0) * 100, 2, ',', '.'); ?> %</td>
                               <td><?php echo $p['kota']?></td>
                               <td><?php echo $p['provinsi']?></td>
                               <?php foreach($p['products'] as $pr){?>
@@ -144,7 +158,24 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                                 <td><?php //echo $pr['biayatransport'] ?></td>
                                 <td>0</td>
                                 <td><?php echo $pr['nomorinvoice']?></td>
-                                <td><?php echo $pr['metodepembayaran']?></td>
+                                <td>
+                                  <?php
+                                    $mp_ori = trim($pr['metodepembayaran']);
+                                    $mp = strtolower($mp_ori);
+                                    $val = '';
+                                    if (in_array($mp, ['cbd', 'c.b.d', 'tunai', 'transfer', 'c.o.d', ''])) {
+                                      $val = $mp == '' ? '' : '0';
+                                    } elseif (preg_match('/net\s*(\d+)/i', $mp, $matches)) {
+                                      $val = $matches[1];
+                                    } elseif (preg_match('/\d+/', $mp, $matches)) {
+                                      $val = $matches[0];
+                                    } else {
+                                      $val = '0';
+                                    }
+                                    
+                                    echo $val . ($mp_ori != '' ? ' (' . $mp_ori . ')' : '');
+                                  ?>
+                                </td>
                                 <td>0</td>
                                 <td>
                                   <?php
