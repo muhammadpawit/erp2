@@ -2762,7 +2762,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 									$sales_id=0;
 								}
 								*/
-								$sales=$this->model_import_komisisales->getSales(strtolower($Row[3]));
+								$sales=$this->model_import_komisisales->getSales(strtolower(trim($Row[3])));
 								if(!empty($sales)){
 									$sales_id=$sales['id'];
 								}else{

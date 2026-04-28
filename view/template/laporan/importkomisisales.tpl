@@ -272,7 +272,6 @@
                           <th>Metode Pembayaran</th>
                           <th>Lama Bayar (Hari)</th>
                           <th>Status</th>
-                          <th>Profit Margin Bersih</th>
                           <th>Keterangan</th>
                           <th> Profit Margin Kotor Setelah Pajak </th>
                           <th> Profit Margin Bersih</th>
@@ -304,8 +303,24 @@
                                     $h=floor($diff / (60 * 60 * 24)) . ' '; // Umur anda dalam hitungan hari
                                   }
 
-                                  if($h>0){
-                                    $biayabungakredit = round($th*0.025/30*$h);
+                                  $mp_ori_temp = trim($prd['metodepembayaran']);
+                                  $mp_lower_temp = strtolower($mp_ori_temp);
+                                  $mp_hari_temp = 0;
+                                  if (in_array($mp_lower_temp, ['cbd', 'c.b.d', 'tunai', 'transfer', 'c.o.d', ''])) {
+                                    $mp_hari_temp = 0;
+                                  } elseif (preg_match('/net\s*(\d+)/i', $mp_lower_temp, $matches)) {
+                                    $mp_hari_temp = (int)$matches[1];
+                                  } elseif (preg_match('/\d+/', $mp_lower_temp, $matches)) {
+                                    $mp_hari_temp = (int)$matches[0];
+                                  }
+
+                                  $h_bunga = $h;
+                                  if ($prd['status'] != 1 && $mp_hari_temp > 60) {
+                                      $h_bunga = $mp_hari_temp;
+                                  }
+
+                                  if($h_bunga>0){
+                                    $biayabungakredit = round($th*0.025/30*$h_bunga);
                                   }else{
                                     $biayabungakredit=0;
                                   }
@@ -321,11 +336,7 @@
                           <tr style="background-color:#e3fbfc">
                               <?php 
                                 $i=0;
-                                if($p['tglinvoice']<'2022-04-01'){
-                                  $totalprofitkotor=(($p['total']-$th)/1.1);
-                                }else{
-                                  $totalprofitkotor=(($p['total']-$th)/1.11);
-                                }
+                                $totalprofitkotor=(($p['total']-$th)/1.11);
                                 
                                 $bersihbaru=$totalprofitkotor-($p['bkirim']+$biayabungakredit);
                                   if($bersihbaru>=0){
@@ -353,18 +364,18 @@
                               <td></td>
                               <td><?php echo $h>=0?$h:0?></td>
                               <td></td>
-                              <td style="color:<?php echo $color?>"><?php echo $this->currency->format($bersih);?></td>
                               <td><?php echo $p['customerbaru']=="Ya"?'Customer Baru':'';?></td>
                               <td><?php echo $this->currency->format(round($totalprofitkotor));?></td>
                               <td><?php echo $this->currency->format(round($bersihbaru));?></td>
-                              <td><?php echo $th != 0 ? ($bersihbaru/$th) : 0; ?></td>
-                              <?php foreach($p['products'] as $pr){?>
+                              <td><?php echo number_format(($th != 0 ? ($bersihbaru/$th) : 0) * 100, 2, ',', '.'); ?> %</td>
+                          </tr>
+                          <?php foreach($p['products'] as $pr){?>
                               <tr>
                                 <td><?php echo $pr['tglso']?></td>
                                 <td><?php echo $pr['tglinvoice']?></td>
                                 <td><?php echo $pr['tgllunas']=='1970-01-01'?'':$pr['tgllunas']?></td>
                                 <td><?php echo $pr['namasales']?></td>
-                                <td><?php echo $pr['kodecustomer']?></td>
+                                <td><?php echo isset($pr['kodecustomer']) ? $pr['kodecustomer'] : ''?></td>
                                 <td><?php echo $pr['namacustomer']?></td>
                                 <td><?php echo $pr['namabarang']?></td>
                                 <td><?php echo $pr['qty']?></td>
@@ -376,7 +387,27 @@
                                 <td><?php //echo $pr['biayatransport'] ?></td>
                                 <td>0</td>
                                 <td><?php echo $pr['nomorinvoice']?></td>
-                                <td><?php echo $pr['metodepembayaran']?></td>
+                                <td>
+                                  <?php
+                                    $mp_ori = trim($pr['metodepembayaran']);
+                                    $mp = strtolower($mp_ori);
+                                    $val = '';
+                                    if (in_array($mp, ['cbd', 'c.b.d', 'tunai', 'transfer', 'c.o.d', ''])) {
+                                      $val = $mp == '' ? '' : '0';
+                                    } elseif (preg_match('/net\s*(\d+)/i', $mp, $matches)) {
+                                      $val = $matches[1];
+                                    } elseif (preg_match('/\d+/', $mp, $matches)) {
+                                      $val = $matches[0];
+                                    } else {
+                                      $val = '0';
+                                    }
+                                    
+                                    echo $val;
+                                    if ($mp_ori != '') {
+                                      echo '<br><small class="text-muted" style="color: #999;">(' . $mp_ori . ')</small>';
+                                    }
+                                  ?>
+                                </td>
                                 <td>0</td>
                                 <td>
                                   <?php
@@ -385,20 +416,14 @@
                                     }else{
                                       echo "Belum Lunas";
                                     }
-                                    /*
-                                    if($pr['status']==1 && $pr['tgllunas']<='2021-02-27'){
-                                      echo "Lunas";
-                                    }else{
-                                      echo "Belum Lunas";
-                                    }
-                                    */
-                                    ?>
+                                  ?>
                                 </td>
-                                <td>0</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
                                 <td></td>
                               </tr>
-                              <?php } ?>
-                          </tr>                     
+                          <?php } ?>                     
                         <?php } ?>
                     </tbody>
                 </table>

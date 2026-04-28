@@ -15,7 +15,7 @@
             <h3 class="box-title">Nama Sales</h3>
             <div class="button pull-right">
 									<a href="<?php echo $insert; ?>"><button type="button" class="btn btn-primary">Tambah</button></a>
-
+                                    <button type="button" onclick="if(confirm('Apakah Anda yakin ingin menghapus data yang dipilih?')) { $('#form').submit(); }" class="btn btn-danger">Hapus Terpilih</button>
 								</div>
           </div>
           <div class="box-body">
@@ -74,8 +74,10 @@
                   <table class="table table-bordered">
                     <thead>
                       <tr>
+                        <th width="1" style="text-align: center;"><input type="checkbox" onclick="$('input[name*=\'selected\']').attr('checked', this.checked);" /></th>
                         <th class="left">ID Sales</th>
                         <th class="left">Nama Pegawai</th>
+                        <th class="right">Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -83,8 +85,18 @@
                       <?php if ($absensis) { ?>
                       <?php foreach ($absensis as $category) { ?>
                       <tr>
+                        <td style="text-align: center;">
+                          <?php if (!empty($selected) && in_array($category['id'], (array)$selected)) { ?>
+                          <input type="checkbox" name="selected[]" value="<?php echo $category['id']; ?>" checked="checked" />
+                          <?php } else { ?>
+                          <input type="checkbox" name="selected[]" value="<?php echo $category['id']; ?>" />
+                          <?php } ?>
+                        </td>
                         <td class="left"><?php echo $category['id']; ?></td>
                         <td class="left"><?php echo $category['name']; ?></td>
+                        <td class="right">
+                           <a onclick="if(confirm('Apakah Anda yakin ingin menghapus nama sales ini?')) location.href='<?php echo $delete; ?>&id=<?php echo $category['id']; ?>'" class="btn btn-danger btn-sm">Hapus</a>
+                        </td>
                       </tr>
                       <?php } ?>
                       <?php } else { ?>

@@ -192,7 +192,7 @@ class ControllerKepegawaianSales extends Controller {
 				$this->model_kepegawaian_sales->updateIjin($data,$where);
 			}
 
-			$this->session->data['success'] = 'Data Cuti Pegawai berhasil dihapus';
+			$this->session->data['success'] = 'Data Nama Sales berhasil dihapus';
 
 			$url = '';
 			if (isset($this->request->get['filter_date_start'])) {
@@ -211,6 +211,31 @@ class ControllerKepegawaianSales extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
+
+			$this->redirect($this->url->link('kepegawaian/sales', 'token=' . $this->session->data['token'].$url, 'SSL'));
+		} elseif (isset($this->request->get['id']) && $this->validateDelete()) {
+			$data=array('hapus'	=> 1);
+			$where=array('id' => $this->request->get['id']);
+			$this->model_kepegawaian_sales->updateIjin($data,$where);
+			
+			$this->session->data['success'] = 'Data Nama Sales berhasil dihapus';
+
+			$url = '';
+			if (isset($this->request->get['filter_date_start'])) {
+				$url .= '&filter_date_start=' . urlencode(html_entity_decode($this->request->get['filter_date_start'], ENT_QUOTES, 'UTF-8'));
+			}
+
+			if (isset($this->request->get['filter_date_end'])) {
+				$url .= '&filter_date_end=' . urlencode(html_entity_decode($this->request->get['filter_date_end'], ENT_QUOTES, 'UTF-8'));
+			}
+
+			if (isset($this->request->get['filter_name'])) {
+				$url .= '&filter_name=' . urlencode(html_entity_decode($this->request->get['filter_name'], ENT_QUOTES, 'UTF-8'));
+			}
+
+			if (isset($this->request->get['page'])) {
+				$url .= '&page=' . $this->request->get['page'];
+			}
 
 			$this->redirect($this->url->link('kepegawaian/sales', 'token=' . $this->session->data['token'].$url, 'SSL'));
 		}

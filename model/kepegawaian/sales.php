@@ -10,7 +10,7 @@ class ModelKepegawaianSales extends Model {
 	}
 	public function updateIjin($data,$where=array()){
 		//if($data['status']){}
-		$this->db->update('cuti',$data,$where);
+		$this->db->update('namasales',$data,$where);
 	}
 	public function getIjin($table){
 		$sql="SELECT * FROM $table WHERE hapus=0 ";
