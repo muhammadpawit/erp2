@@ -90,21 +90,13 @@ class ModelImportKomisiSales extends Model {
 
   public function GetImportdetails($id){
     $products=array();
-    // Optimized: Combine invoice items with latest harga_terendah and poin in one query
-    $sql=" SELECT i.*, 
-      (SELECT harga_terendah FROM harga_terendah_new h 
-       WHERE h.gudang = i.gudang_id AND h.kodebarang = i.kodebarang AND h.tgl_berlaku <= i.tglso::date
-       ORDER BY h.tgl_berlaku DESC LIMIT 1) as lookup_harga_terendah,
-      (SELECT poin FROM product_baru p 
-       WHERE p.kodebarang = i.kodebarang ORDER BY p.id DESC LIMIT 1) as lookup_poin
-    FROM inv_komisi_sales i 
-    WHERE i.nomorinvoice='" . $this->db->escape($id) . "' and i.hapus=0 ";
+    $sql=" SELECT * FROM inv_komisi_sales WHERE nomorinvoice='" . $this->db->escape($id) . "' and hapus=0 ";
     
     $d=$this->db->query($sql);
     $res = $d->rows;
     foreach ($res as $result) {
-      $harga_terendah = $result['lookup_harga_terendah'] ? $result['lookup_harga_terendah'] : 0;
-      $poin = $result['lookup_poin'] ? $result['lookup_poin'] : 0;
+      $harga_terendah = $this->gethargaterendah($result['tglso'], $result['gudang_id'], $result['kodebarang']);
+      $poin = $this->getpoin($result['kodebarang']);
       
       $biayatransport = 0;
       if($result['pengiriman']==1){
@@ -136,6 +128,7 @@ class ModelImportKomisiSales extends Model {
         'ivs'=>0,
         'kodebarang'=>$result['kodebarang'],
         'pengiriman'=>$result['pengiriman'],
+        'kodecustomer'=>$result['kodecustomer'],
       );
     }
     return $products;
@@ -155,21 +148,13 @@ class ModelImportKomisiSales extends Model {
 
   public function GetImportdetailsCompare($id){
     $products=array();
-    // Optimized: Combine invoice items with latest harga_terendah and poin in one query
-    $sql=" SELECT i.*, 
-      (SELECT harga_terendah FROM harga_terendah_new h 
-       WHERE h.gudang = i.gudang_id AND h.kodebarang = i.kodebarang AND h.tgl_berlaku <= i.tglso::date
-       ORDER BY h.tgl_berlaku DESC LIMIT 1) as lookup_harga_terendah,
-      (SELECT poin FROM product_baru p 
-       WHERE p.kodebarang = i.kodebarang ORDER BY p.id DESC LIMIT 1) as lookup_poin
-    FROM inv_komisi_sales_compare i 
-    WHERE i.nomorinvoice='" . $this->db->escape($id) . "' and i.hapus=0 ";
+    $sql=" SELECT * FROM inv_komisi_sales_compare WHERE nomorinvoice='" . $this->db->escape($id) . "' and hapus=0 ";
     
     $d=$this->db->query($sql);
     $res = $d->rows;
     foreach ($res as $result) {
-      $harga_terendah = $result['lookup_harga_terendah'] ? $result['lookup_harga_terendah'] : 0;
-      $poin = $result['lookup_poin'] ? $result['lookup_poin'] : 0;
+      $harga_terendah = $this->gethargaterendah($result['tglso'], $result['gudang_id'], $result['kodebarang']);
+      $poin = $this->getpoin($result['kodebarang']);
       
       $biayatransport = 0;
       if($result['pengiriman']==1){
@@ -202,6 +187,7 @@ class ModelImportKomisiSales extends Model {
         'ivs'=>$this->currency->format(0),
         'kodebarang'=>$result['kodebarang'],
         'pengiriman'=>$result['pengiriman'],
+        'kodecustomer'=>$result['kodecustomer'],
       );
     }
     return $products;

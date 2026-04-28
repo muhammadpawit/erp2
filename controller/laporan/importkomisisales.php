@@ -1286,22 +1286,29 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			  
 			  $Reader = new SpreadsheetReader($targetPath);
 			  
+			  $this->load->model('catalog/gudang');
+			  $gudangs = $this->model_catalog_gudang->getGudangs();
+			  $gudang_map = array();
+			  foreach ($gudangs as $g) {
+				  $gudang_map[strtolower(trim($g['nama']))] = $g['gudang_id'];
+			  }
+
 			  $sheetCount = count($Reader->sheets());
 			  for($i=0;$i<$sheetCount;$i++)
 			  {
 				  
-				  $Reader->ChangeSheet($i);
+				  if (!$Reader->ChangeSheet($i)) {
+					  continue;
+				  }
 				  
 				  foreach ($Reader as $Row)
 				  {
 					  if($a>1){
 						
-						if(strtolower($Row[15])=="kantor pusat - tangerang"){
-							$gudang_id=1;
-						}
-						if(strtolower($Row[15])=="kantor cabang - surabaya"){
-							$gudang_id=3;
-						}
+						$g_name = strtolower(trim($Row[15]));
+						if ($g_name == "kantor pusat - tangerang") $g_name = "tangerang";
+						else if ($g_name == "kantor cabang - surabaya") $g_name = "surabaya";
+						$gudang_id = isset($gudang_map[$g_name]) ? $gudang_map[$g_name] : 0;
 						
 						if(!empty($Row[16])){
 							if(strtolower($Row[16])=="diantar"){
@@ -2599,22 +2606,27 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			  
 			  $Reader = new SpreadsheetReader($targetPath);
 			  
+			  $this->load->model('catalog/gudang');
+			  $gudangs = $this->model_catalog_gudang->getGudangs();
+			  $gudang_map = array();
+			  foreach ($gudangs as $g) {
+				  $gudang_map[strtolower(trim($g['nama']))] = $g['gudang_id'];
+			  }
+
 			  $sheetCount = count($Reader->sheets());
 			  for($i=0;$i<$sheetCount;$i++)
 			  {
 				  
-				  $Reader->ChangeSheet($i);
+				  if (!$Reader->ChangeSheet($i)) {
+					  continue;
+				  }
 				  
 				  foreach ($Reader as $Row)
 				  {
 					  if($a>1){
 						
-						if(strtolower($Row[15])=="tangerang"){
-							$gudang_id=1;
-						}
-						if(strtolower($Row[15])=="surabaya"){
-							$gudang_id=3;
-						}
+						$g_name = strtolower(trim($Row[15]));
+						$gudang_id = isset($gudang_map[$g_name]) ? $gudang_map[$g_name] : 0;
 						
 						if(!empty($Row[16])){
 							if(strtolower($Row[16])=="diantar"){

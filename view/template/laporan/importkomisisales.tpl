@@ -357,7 +357,7 @@
                               <td><?php echo $p['customerbaru']=="Ya"?'Customer Baru':'';?></td>
                               <td><?php echo $this->currency->format(round($totalprofitkotor));?></td>
                               <td><?php echo $this->currency->format(round($bersihbaru));?></td>
-                              <td><?php echo ($bersihbaru/$th) ?></td>
+                              <td><?php echo $th != 0 ? ($bersihbaru/$th) : 0; ?></td>
                               <?php foreach($p['products'] as $pr){?>
                               <tr>
                                 <td><?php echo $pr['tglso']?></td>
