@@ -44,6 +44,12 @@ class ControllerLaporanhargaterendah extends Controller {
 			$filter_tanggal = !empty($latest['latest']) ? date('Y-m-d', strtotime($latest['latest'])) : date('Y-m-d');
 		}
 
+		if (isset($this->request->get['filter_nama'])) {
+			$filter_nama = $this->request->get['filter_nama'];
+		} else {
+			$filter_nama = null;
+		}
+
 		if (isset($this->request->get['page'])) {
 			$page = $this->request->get['page'];
 		} else {
@@ -53,6 +59,10 @@ class ControllerLaporanhargaterendah extends Controller {
 		$url = '';
 		if ($filter_tanggal) {
 			$url .= '&filter_tanggal=' . urlencode($filter_tanggal);
+		}
+
+		if ($filter_nama) {
+			$url .= '&filter_nama=' . urlencode($filter_nama);
 		}
 
 		$this->data['token'] = $this->session->data['token'];
@@ -84,7 +94,13 @@ class ControllerLaporanhargaterendah extends Controller {
 
 		// 2. Get total products having any price up to the selected date
 		$product_total = 0;
-		$total_query = $this->db->query("SELECT COUNT(DISTINCT kodebarang) as total FROM harga_terendah_new WHERE hapus = 0 AND DATE(tgl_berlaku) <= '" . $this->db->escape($filter_tanggal) . "'");
+		$where = "WHERE h.hapus = 0 AND DATE(h.tgl_berlaku) <= '" . $this->db->escape($filter_tanggal) . "'";
+		if ($filter_nama) {
+			$where .= " AND (pb.nama LIKE '%" . $this->db->escape($filter_nama) . "%' OR h.nama LIKE '%" . $this->db->escape($filter_nama) . "%')";
+		}
+
+		$total_sql = "SELECT COUNT(DISTINCT h.kodebarang) as total FROM harga_terendah_new h LEFT JOIN product_baru pb ON h.kodebarang = pb.kodebarang " . $where;
+		$total_query = $this->db->query($total_sql);
 		if ($total_query->num_rows) {
 			$product_total = $total_query->row['total'];
 		}
@@ -95,7 +111,7 @@ class ControllerLaporanhargaterendah extends Controller {
 				COALESCE(pb.nama, h.nama) as nama_display 
 				FROM harga_terendah_new h
 				LEFT JOIN product_baru pb ON h.kodebarang = pb.kodebarang
-				WHERE h.hapus = 0 AND DATE(h.tgl_berlaku) <= '" . $this->db->escape($filter_tanggal) . "' 
+				" . $where . "
 				ORDER BY nama_display ASC 
 				LIMIT " . (int)$limit . " OFFSET " . (int)$start;
 		
@@ -153,13 +169,14 @@ class ControllerLaporanhargaterendah extends Controller {
 
 		$this->data['heading_title'] = 'Daftar Harga Terendah';
 		$this->data['filter_tanggal'] = $filter_tanggal;
+		$this->data['filter_nama'] = $filter_nama;
 
 		$pagination = new Pagination();
 		$pagination->total = $product_total;
 		$pagination->page = $page;
 		$pagination->limit = $limit;
 		$pagination->text = $this->language->get('text_pagination');
-		$pagination->url = $this->url->link('laporan/hargaterendah', 'token=' . $this->session->data['token'] . '&filter_tanggal=' . $filter_tanggal . '&page={page}');
+		$pagination->url = $this->url->link('laporan/hargaterendah', 'token=' . $this->session->data['token'] . '&filter_tanggal=' . $filter_tanggal . ($filter_nama ? '&filter_nama=' . urlencode($filter_nama) : '') . '&page={page}');
 
 		$this->data['pagination'] = $pagination->render();
 

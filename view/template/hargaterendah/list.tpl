@@ -36,12 +36,16 @@
                 <table class="table table-stripped">
                     <thead>
                       <tr>
+                        <th>Nama Barang</th>
                         <th>Tanggal</th>
                         <th></th>
                       </tr>
                     </thead>
                     <tbody>
                     <tr>
+                      <td>
+                        <input type="text" name="filter_nama" value="<?php echo $filter_nama; ?>" placeholder="Nama Barang" class="form-control" />
+                      </td>
                       <td>
                         <select style="width:100%;" name="filter_tanggal" class="form-control lokasi-pameran">
 
@@ -131,6 +135,12 @@ function filter() {
 
 	if (filter_tanggal) {
 		url += '&filter_tanggal=' + encodeURIComponent(filter_tanggal);
+	}
+
+  var filter_nama = $('input[name=\'filter_nama\']').val();
+
+	if (filter_nama) {
+		url += '&filter_nama=' + encodeURIComponent(filter_nama);
 	}
 
 	location = url;
