@@ -191,6 +191,9 @@ class ControllerLaporanImportKomisiSales extends Controller {
 
  		if (isset($this->error['warning'])) {
 			$this->data['error_warning'] = $this->error['warning'];
+		} elseif (isset($this->session->data['error_warning'])) {
+			$this->data['error_warning'] = $this->session->data['error_warning'];
+			unset($this->session->data['error_warning']);
 		} else {
 			$this->data['error_warning'] = '';
 		}
@@ -562,9 +565,14 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		
 		$this->load->model('localisation/country');
 		$this->data['countries'] = $this->model_localisation_country->getCountries();
+		
+		$this->data['total_data'] = $this->model_import_komisisales->countInv($filterall);
 
  		if (isset($this->error['warning'])) {
 			$this->data['error_warning'] = $this->error['warning'];
+		} elseif (isset($this->session->data['error_warning'])) {
+			$this->data['error_warning'] = $this->session->data['error_warning'];
+			unset($this->session->data['error_warning']);
 		} else {
 			$this->data['error_warning'] = '';
 		}
@@ -703,8 +711,9 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			//echo "<pre>";print_r($this->request->post);exit;
 			$sql="UPDATE inv_komisi_sales set hapus=1 WHERE tglinvoice BETWEEN '".$this->request->get['filter_date_start']."' AND '".$this->request->get['filter_date_end']."' ";
 			$this->db->query($sql);
+			$count = $this->db->countAffected();
 
-			$this->session->data['success'] = 'Sukses: Data Umum berhasil dihapus';
+			$this->session->data['success'] = 'Sukses: ' . $count . ' Data Umum berhasil dihapus';
 
 			$url = '';
 
@@ -763,14 +772,14 @@ class ControllerLaporanImportKomisiSales extends Controller {
 	
 	public function import_lunas(){
 		$this->load->model('import/komisisales');
-		$allowedFileType = ['application/vnd.ms-excel','text/xls','text/xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+		$fileExt = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
 		$d=array();
 		$a=1;
 		$iu=array();
 		$pengiriman=1;
 		$sales_id=0;
 		//echo "<pre>";print_r($_FILES["file"]);exit;
-		if(in_array($_FILES["file"]["type"],$allowedFileType)){
+		if(in_array($fileExt, ['xls', 'xlsx'])){
 	  
 			  $targetPath = DIR_SYSTEM.'uploads/'.$_FILES['file']['name'];
 			  move_uploaded_file($_FILES['file']['tmp_name'], $targetPath);
@@ -801,14 +810,15 @@ class ControllerLaporanImportKomisiSales extends Controller {
 				   }
 			   }
 			   //echo "<pre>";print_r(($d));exit;
+			   $this->session->data['success'] = 'Data compare berhasil di update';
 		}
 		else
 		{ 
-			  $type = "error";
-			  $message = "Invalid File Type. Upload Excel File.";
+			  $this->session->data['error_warning'] = "Invalid File Type. Upload Excel File dengan format xls/xlsx.";
 		}
-		unlink($targetPath);
-		$this->session->data['success'] = 'Data compare berhasil di update';
+		if (isset($targetPath) && file_exists($targetPath)) {
+			unlink($targetPath);
+		}
 
 		$url = '';
 
@@ -1106,6 +1116,9 @@ class ControllerLaporanImportKomisiSales extends Controller {
 
  		if (isset($this->error['warning'])) {
 			$this->data['error_warning'] = $this->error['warning'];
+		} elseif (isset($this->session->data['error_warning'])) {
+			$this->data['error_warning'] = $this->session->data['error_warning'];
+			unset($this->session->data['error_warning']);
 		} else {
 			$this->data['error_warning'] = '';
 		}
@@ -1273,13 +1286,13 @@ class ControllerLaporanImportKomisiSales extends Controller {
 	}
 
 	public function import_compare(){
-		$allowedFileType = ['application/vnd.ms-excel','text/xls','text/xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+		$fileExt = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
 		$d=array();
 		$a=1;
 		$iu=array();
 		$pengiriman=1;
 		$sales_id=0;
-		if(in_array($_FILES["file"]["type"],$allowedFileType)){
+		if(in_array($fileExt, ['xls', 'xlsx'])){
 	  
 			  $targetPath = DIR_SYSTEM.'uploads/'.$_FILES['file']['name'];
 			  move_uploaded_file($_FILES['file']['tmp_name'], $targetPath);
@@ -1398,15 +1411,16 @@ class ControllerLaporanImportKomisiSales extends Controller {
 				   }
 			   }
 			   //echo "<pre>";print_r(($d));exit;
+			   $this->session->data['success'] = 'Data compare berhasil di import';
 		}
 		else
 		{ 
-			  $type = "error";
-			  $message = "Invalid File Type. Upload Excel File.";
+			  $this->session->data['error_warning'] = "Invalid File Type. Upload Excel File dengan format xls/xlsx.";
 		}
 
-		unlink($targetPath);
-		$this->session->data['success'] = 'Data compare berhasil di import';
+		if (isset($targetPath) && file_exists($targetPath)) {
+			unlink($targetPath);
+		}
 
 		$url = '';
 
@@ -2044,6 +2058,9 @@ class ControllerLaporanImportKomisiSales extends Controller {
 
  		if (isset($this->error['warning'])) {
 			$this->data['error_warning'] = $this->error['warning'];
+		} elseif (isset($this->session->data['error_warning'])) {
+			$this->data['error_warning'] = $this->session->data['error_warning'];
+			unset($this->session->data['error_warning']);
 		} else {
 			$this->data['error_warning'] = '';
 		}
@@ -2421,6 +2438,9 @@ class ControllerLaporanImportKomisiSales extends Controller {
 
  		if (isset($this->error['warning'])) {
 			$this->data['error_warning'] = $this->error['warning'];
+		} elseif (isset($this->session->data['error_warning'])) {
+			$this->data['error_warning'] = $this->session->data['error_warning'];
+			unset($this->session->data['error_warning']);
 		} else {
 			$this->data['error_warning'] = '';
 		}
@@ -2593,19 +2613,25 @@ class ControllerLaporanImportKomisiSales extends Controller {
 
 	public function import(){
 		$this->load->model('import/komisisales');
-		$allowedFileType = ['application/vnd.ms-excel','text/xls','text/xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+		$fileExt = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
 		$d=array();
 		$a=1;
 		$iu=array();
 		$pengiriman=1;
 		$sales_id=0;
-		if(in_array($_FILES["file"]["type"],$allowedFileType)){
+		if(in_array($fileExt, ['xls', 'xlsx'])){
 	  
 			  $targetPath = DIR_SYSTEM.'uploads/'.$_FILES['file']['name'];
 			  move_uploaded_file($_FILES['file']['tmp_name'], $targetPath);
 			  
 			  $Reader = new SpreadsheetReader($targetPath);
 			  
+			  $formatDate = function($val) {
+				  if (empty($val)) return null;
+				  if (is_numeric($val)) return date('Y-m-d', ($val - 25569) * 86400);
+				  return date('Y-m-d', strtotime($val));
+			  };
+
 			  $this->load->model('catalog/gudang');
 			  $gudangs = $this->model_catalog_gudang->getGudangs();
 			  $gudang_map = array();
@@ -2777,9 +2803,9 @@ class ControllerLaporanImportKomisiSales extends Controller {
 							}
 
 						  $d=array(
-							  'tglinvoice' =>date('Y-m-d',strtotime($Row[0])),
+							  'tglinvoice' => $formatDate($Row[0]),
 							  'nomorinvoice'=>$Row[1],
-							  'tglso'=>!empty($Row[2])?date('Y-m-d',strtotime($Row[2])):date('Y-m-d',strtotime($Row[0])),
+							  'tglso'=>!empty($Row[2]) ? $formatDate($Row[2]) : $formatDate($Row[0]),
 							  'namasales'=>$Row[3],
 							  'namacustomer'=>$this->db->escape($Row[4]),
 							  'kodebarang'=>$Row[5],
@@ -2790,7 +2816,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 							  'hargasatuan'=>$Row[9],
 							  'metodepembayaran'=>$Row[11],
 							  'status'=>$statusbayar, // index ke 12
-							  'tgllunas' =>date('Y-m-d',strtotime($Row[13])),
+							  'tgllunas' => $formatDate($Row[13]),
 							  //'catatan'=>$Row[14],
 							  'catatan'=>'-', // index ke 14
 							  'cabang'=>$Row[15],
@@ -2808,15 +2834,15 @@ class ControllerLaporanImportKomisiSales extends Controller {
 					  $a++;
 				   }
 			   }
-			   //echo "<pre>";print_r(($d));exit;
+			   $this->session->data['success'] = 'Data berhasil di import';
 		}
 		else
 		{ 
-			  $type = "error";
-			  $message = "Invalid File Type. Upload Excel File.";
+			  $this->session->data['error_warning'] = "Invalid File Type. Upload Excel File dengan format xls/xlsx.";
 		}
-		$this->session->data['success'] = 'Data berhasil di import';
-		unlink($targetPath);
+		if (isset($targetPath) && file_exists($targetPath)) {
+			unlink($targetPath);
+		}
 		$url = '';
 
 		if (isset($this->request->get['filter_date_start'])) {
@@ -2858,9 +2884,9 @@ class ControllerLaporanImportKomisiSales extends Controller {
 	}
 
 	public function importhargaterendahnew(){
-		$allowedFileType = ['application/vnd.ms-excel','text/xls','text/xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+		$fileExt = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
 		
-		if(in_array($_FILES["file"]["type"],$allowedFileType)){
+		if(in_array($fileExt, ['xls', 'xlsx'])){
 			  $targetPath = DIR_SYSTEM.'uploads/'.$_FILES['file']['name'];
 			  move_uploaded_file($_FILES['file']['tmp_name'], $targetPath);
 			  
@@ -2900,14 +2926,15 @@ class ControllerLaporanImportKomisiSales extends Controller {
 					  $a++;
 				   }
 			   }
+			   $this->session->data['success'] = 'Harga Terendah berhasil di import';
 		}
 		else
 		{ 
-			  $type = "error";
-			  $message = "Invalid File Type. Upload Excel File.";
+			  $this->session->data['error_warning'] = "Invalid File Type. Upload Excel File dengan format xls/xlsx.";
 		}
-		unlink($targetPath);
-		$this->session->data['success'] = 'Harga Terendah berhasil di import';
+		if (isset($targetPath) && file_exists($targetPath)) {
+			unlink($targetPath);
+		}
 
 		$url = '';
 

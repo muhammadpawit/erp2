@@ -52,6 +52,7 @@ class ControllerCommonHeader extends Controller {
 			// end baru
 			$this->data['logged'] = $this->user->getUserName();
 			$this->data['logout'] = $this->url->link('common/logout', 'token=' . $this->session->data['token'], 'SSL');
+			$this->data['update_erp'] = $this->url->link('common/update', 'token=' . $this->session->data['token'], 'SSL');
 
 			//master data
 			$this->data['category'] = $this->url->link('catalog/category', 'token=' . $this->session->data['token'], 'SSL');

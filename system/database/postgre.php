@@ -18,7 +18,7 @@ final class Postgre {
 		$resource = pg_query($this->link, $sql);
 
 		if ($resource) {
-			if (is_resource($resource)) {
+			if (is_resource($resource) || (is_object($resource) && get_class($resource) == 'PgSql\Result')) {
 				$i = 0;
 
 				$data = array();

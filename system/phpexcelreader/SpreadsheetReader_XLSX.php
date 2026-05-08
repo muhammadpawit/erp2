@@ -67,6 +67,7 @@
 		 * @var SimpleXMLElement XML object for the workbook XML file
 		 */
 		private $WorkbookXML = false;
+		private $WorkbookRels = array();
 
 		// Style data
 		/**
@@ -227,6 +228,18 @@
 			{
 				$this -> WorkbookXML = new SimpleXMLElement($Zip -> getFromName('xl/workbook.xml'));
 			}
+			
+			if ($Zip -> locateName('xl/_rels/workbook.xml.rels') !== false)
+			{
+				$RelsXML = new SimpleXMLElement($Zip -> getFromName('xl/_rels/workbook.xml.rels'));
+				foreach ($RelsXML -> Relationship as $Rel)
+				{
+					if (strpos((string)$Rel['Type'], 'worksheet') !== false)
+					{
+						$this -> WorkbookRels[(string)$Rel['Id']] = basename((string)$Rel['Target']);
+					}
+				}
+			}
 
 			// Extracting the XMLs from the XLSX zip file
 			if ($Zip -> locateName('xl/sharedStrings.xml') !== false)
@@ -329,9 +342,9 @@
 			// Better safe than sorry - shouldn't try deleting '.' or '/', or '..'.
 			if (strlen($this -> TempDir) > 2)
 			{
-				@rmdir($this -> TempDir.'xl'.DIRECTORY_SEPARATOR.'worksheets');
-				@rmdir($this -> TempDir.'xl');
-				@rmdir($this -> TempDir);
+				if (is_dir($this -> TempDir.'xl'.DIRECTORY_SEPARATOR.'worksheets')) @rmdir($this -> TempDir.'xl'.DIRECTORY_SEPARATOR.'worksheets');
+				if (is_dir($this -> TempDir.'xl')) @rmdir($this -> TempDir.'xl');
+				if (is_dir($this -> TempDir)) @rmdir($this -> TempDir);
 			}
 
 			if ($this -> Worksheet && $this -> Worksheet instanceof XMLReader)
@@ -371,11 +384,18 @@
 				foreach ($this -> WorkbookXML -> sheets -> sheet as $Index => $Sheet)
 				{
 					$Attributes = $Sheet -> attributes('r', true);
+					$SheetID = 0;
 					foreach ($Attributes as $Name => $Value)
 					{
 						if ($Name == 'id')
 						{
-							$SheetID = (int)str_replace('rId', '', (string)$Value);
+							$rId = (string)$Value;
+							if (isset($this -> WorkbookRels[$rId])) {
+								$Target = $this -> WorkbookRels[$rId];
+								$SheetID = (int)str_replace(array('sheet', '.xml'), '', $Target);
+							} else {
+								$SheetID = (int)str_replace('rId', '', $rId);
+							}
 							break;
 						}
 					}

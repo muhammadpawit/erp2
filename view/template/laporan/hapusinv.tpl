@@ -65,7 +65,7 @@
                   <div class="row">
                     <div class="col-md-12">
                       <div class="alert alert-info">
-                        <h4>Apakah anda yakin akan menghapus seluruh invoice di tanggal <?php echo $filter_date_start ?> sampai <?php echo $filter_date_end ?></h4>.
+                        <h4>Apakah anda yakin akan menghapus seluruh invoice (<?php echo $total_data; ?> data) di tanggal <?php echo $filter_date_start ?> sampai <?php echo $filter_date_end ?></h4>.
                         
                       </div>
                       <p class="text-danger">Data yang sudah dihapus tidak dapat dikembalikan.</p>

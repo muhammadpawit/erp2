@@ -73,6 +73,20 @@ class ControllerCommonHome extends Controller {
 		}
 
 
+		if (isset($this->session->data['success'])) {
+			$this->data['success'] = $this->session->data['success'];
+			unset($this->session->data['success']);
+		} else {
+			$this->data['success'] = '';
+		}
+
+		if (isset($this->session->data['error'])) {
+			$this->data['error'] = $this->session->data['error'];
+			unset($this->session->data['error']);
+		} else {
+			$this->data['error'] = '';
+		}
+
 		$this->data['token'] = $this->session->data['token'];
 
 

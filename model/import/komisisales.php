@@ -69,7 +69,7 @@ class ModelImportKomisiSales extends Model {
 
     $d=$this->db->query($sql);
 
-    return $d->row['poin'];
+    return isset($d->row['poin']) ? $d->row['poin'] : 0;
   }
 
   public function GetImportdetail($data){
@@ -493,6 +493,18 @@ class ModelImportKomisiSales extends Model {
     $this->db->insert('followuppenagihan',$ins);
     $id=$this->db->getLastId();
     return $id;
+  }
+
+  public function countInv($data) {
+    $sql = "SELECT count(*) as total FROM inv_komisi_sales WHERE hapus = 0";
+    
+    if (!empty($data['tanggal']) && !empty($data['tanggal2'])) {
+      $sql .= " AND tglinvoice BETWEEN '" . $this->db->escape($data['tanggal']) . "' AND '" . $this->db->escape($data['tanggal2']) . "'";
+    }
+    
+    $query = $this->db->query($sql);
+    
+    return $query->row['total'];
   }
 
 }
