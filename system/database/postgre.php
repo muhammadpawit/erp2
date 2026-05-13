@@ -77,7 +77,11 @@ final class Postgre {
 							 $vals .=",";
 				}
 				$column .= $key;
-				$vals .= "'".$value."'";
+				if (is_null($value)) {
+					$vals .= "NULL";
+				} else {
+					$vals .= "'" . $this->escape($value) . "'";
+				}
 				$i++;
 			}
 
@@ -96,7 +100,11 @@ final class Postgre {
 			      $sql .=",";
 				}
 				$sql .=$key.' = ';
-				$sql .= "'".$value."'";
+				if (is_null($value)) {
+					$sql .= "NULL";
+				} else {
+					$sql .= "'" . $this->escape($value) . "'";
+				}
 
 				$i++;
 			}

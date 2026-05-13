@@ -507,5 +507,31 @@ class ModelImportKomisiSales extends Model {
     return $query->row['total'];
   }
 
+  public function importFeeCustomer($data) {
+    $this->db->insert('fee_customer', $data);
+  }
+
+  public function getFeeCustomers($data = array()) {
+    $sql = "SELECT * FROM fee_customer WHERE id > 0 ";
+
+    if (!empty($data['filter_date_start'])) {
+      $sql .= " AND tgl_faktur_penjualan >= '" . $this->db->escape($data['filter_date_start']) . "'";
+    }
+
+    if (!empty($data['filter_date_end'])) {
+      $sql .= " AND tgl_faktur_penjualan <= '" . $this->db->escape($data['filter_date_end']) . "'";
+    }
+
+    $sql .= " ORDER BY id DESC";
+    $query = $this->db->query($sql);
+    return $query->rows;
+  }
+
+  public function sumFeeCustomer($no_faktur) {
+    $sql = "SELECT SUM(fee_customer) as total FROM fee_customer WHERE no_faktur_penjualan = '" . $this->db->escape($no_faktur) . "'";
+    $query = $this->db->query($sql);
+    return (float)$query->row['total'];
+  }
+
 }
 ?>

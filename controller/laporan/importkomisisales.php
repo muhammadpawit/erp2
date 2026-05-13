@@ -135,6 +135,8 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		$this->data['importhargaterendahnew'] = $this->url->link('laporan/importkomisisales/importhargaterendahnew', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['excel'] = $this->url->link('laporan/importkomisisales/excel', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['importlunas'] = $this->url->link('laporan/importkomisisales/import_lunas', 'token=' . $this->session->data['token'].$url, 'SSL');
+		$this->data['importfeecustomer'] = $this->url->link('laporan/importkomisisales/import_fee_customer', 'token=' . $this->session->data['token'].$url, 'SSL');
+		$this->data['feecustomer_list'] = $this->url->link('laporan/importkomisisales/fee_customer_list', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['penjualans'] = array();
 		$this->load->model('catalog/gudang');
 		$this->data['total']=0;
@@ -537,6 +539,8 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		$this->data['importhargaterendahnew'] = $this->url->link('laporan/importkomisisales/importhargaterendahnew', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['excel'] = $this->url->link('laporan/importkomisisales/excel', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['importlunas'] = $this->url->link('laporan/importkomisisales/import_lunas', 'token=' . $this->session->data['token'].$url, 'SSL');
+		$this->data['importfeecustomer'] = $this->url->link('laporan/importkomisisales/import_fee_customer', 'token=' . $this->session->data['token'].$url, 'SSL');
+		$this->data['feecustomer_list'] = $this->url->link('laporan/importkomisisales/fee_customer_list', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['penjualans'] = array();
 		$this->load->model('catalog/gudang');
 		$this->data['total']=0;
@@ -1965,6 +1969,8 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		$this->data['cetak'] = $this->url->link('laporan/komisisales', 'token=' . $this->session->data['token'].'&print=1'.$url, 'SSL');
 		$this->data['importhargaterendahnew'] = $this->url->link('laporan/importkomisisales/importhargaterendahnew', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['excel'] = $this->url->link('laporan/importkomisisales/excel', 'token=' . $this->session->data['token'].$url, 'SSL');
+		$this->data['importfeecustomer'] = $this->url->link('laporan/importkomisisales/import_fee_customer', 'token=' . $this->session->data['token'].$url, 'SSL');
+		$this->data['feecustomer_list'] = $this->url->link('laporan/importkomisisales/fee_customer_list', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['penjualans'] = array();
 		$this->load->model('catalog/gudang');
 		$this->data['total']=0;
@@ -2355,6 +2361,8 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		$this->data['importhargaterendahnew'] = $this->url->link('laporan/importkomisisales/importhargaterendahnew', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['excel'] = $this->url->link('laporan/importkomisisales/excel', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['importlunas'] = $this->url->link('laporan/importkomisisales/import_lunas', 'token=' . $this->session->data['token'].$url, 'SSL');
+		$this->data['importfeecustomer'] = $this->url->link('laporan/importkomisisales/import_fee_customer', 'token=' . $this->session->data['token'].$url, 'SSL');
+		$this->data['feecustomer_list'] = $this->url->link('laporan/importkomisisales/fee_customer_list', 'token=' . $this->session->data['token'].$url, 'SSL');
 		$this->data['hapusinv'] = $this->url->link('laporan/importkomisisales/inv', 'token=' . $this->session->data['token'], 'SSL');
 		$this->data['penjualans'] = array();
 		$this->load->model('catalog/gudang');
@@ -2404,6 +2412,8 @@ class ControllerLaporanImportKomisiSales extends Controller {
 				$biayatransport=50000; // diantar kurir nisson
 			}
 
+			$fee_customer_total = $this->model_import_komisisales->sumFeeCustomer($im['nomorinvoice']);
+
 			$this->data['penjualans'][]=array(
 				'product_id'=>0,
 				'tglinvoice'=>$im['tglinvoice'],
@@ -2427,6 +2437,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 				'bkirim'=>$biayatransport,
 				'products'=>$res,
 				'customerbaru'=>$im['customerbaru'],
+				'fee_customer' => $this->currency->format($fee_customer_total),
 			);	
 		}
 		
@@ -3242,8 +3253,109 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			}
 		}
 			$this->response->setOutput(json_encode($hasil));
-
-
 		}
+
+		public function import_fee_customer(){
+		$this->load->model('import/komisisales');
+		$fileExt = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+		
+		if(in_array($fileExt, ['xls', 'xlsx'])){
+			  $targetPath = DIR_SYSTEM.'uploads/'.$_FILES['file']['name'];
+			  move_uploaded_file($_FILES['file']['tmp_name'], $targetPath);
+			  
+			  $Reader = new SpreadsheetReader($targetPath);
+			  
+              $formatDate = function($val) {
+				  if (empty($val)) return null;
+				  if (is_numeric($val)) return date('Y-m-d', ($val - 25569) * 86400);
+                  if (strpos($val, '/') !== false) {
+                      $parts = explode('/', $val);
+                      if (count($parts) == 3) {
+                          if (strlen($parts[2]) == 4) { // DD/MM/YYYY
+                              return $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+                          }
+                      }
+                  }
+				  return date('Y-m-d', strtotime($val));
+			  };
+
+			  $sheetCount = count($Reader->sheets());
+			  for($i=0;$i<$sheetCount;$i++)
+			  {
+				  $Reader->ChangeSheet($i);
+				  $a = 1;
+				  foreach ($Reader as $Row)
+				  {
+					  if($a > 1){
+                          $data = array(
+                              'cabang'                              => isset($Row[0]) ? $Row[0] : '',
+                              'pelanggan'                           => isset($Row[1]) ? $Row[1] : '',
+                              'sales_outbound'                      => isset($Row[2]) ? $Row[2] : '',
+                              'sales_inbound'                       => isset($Row[3]) ? $Row[3] : '',
+                              'no_pesanan_penjualan'                => isset($Row[4]) ? $Row[4] : '',
+                              'tgl_faktur_penjualan'                => $formatDate(isset($Row[5]) ? $Row[5] : ''),
+                              'no_faktur_penjualan'                 => isset($Row[6]) ? $Row[6] : '',
+                              'wilayah_penjualan'                   => isset($Row[7]) ? $Row[7] : '',
+                              'kode_barang'                         => isset($Row[8]) ? $Row[8] : '',
+                              'nama_barang'                         => isset($Row[9]) ? $Row[9] : '',
+                              'qty'                                 => (float)str_replace(',', '', isset($Row[10]) ? $Row[10] : 0),
+                              'harga'                               => (float)str_replace(',', '', isset($Row[11]) ? $Row[11] : 0),
+                              'total_harga_jual_excl_ppn'           => (float)str_replace(',', '', isset($Row[12]) ? $Row[12] : 0),
+                              'total_dpp_nilai_lain'                => (float)str_replace(',', '', isset($Row[13]) ? $Row[13] : 0),
+                              'fee_customer'                        => (float)str_replace(',', '', isset($Row[14]) ? $Row[14] : 0),
+                              'tanggal_pengajuan_fee'               => $formatDate(isset($Row[15]) ? $Row[15] : ''),
+                              'keterangan_perhitungan_fee_customer' => isset($Row[16]) ? $Row[16] : '',
+                              'pembayaran_faktur_penjualan'         => (float)str_replace(',', '', isset($Row[17]) ? $Row[17] : 0),
+                              'tgl_jatuh_tempo'                     => $formatDate(isset($Row[18]) ? $Row[18] : ''),
+                              'tgl_pembayaran_terakhir'             => $formatDate(isset($Row[19]) ? $Row[19] : ''),
+                              'no_trx_pembayaran'                   => isset($Row[20]) ? $Row[20] : ''
+                          );
+                          
+                          $this->model_import_komisisales->importFeeCustomer($data);
+					  }
+					  $a++;
+				  }
+			  }
+			  
+			  $this->session->data['success'] = 'Sukses: Data Fee Customer berhasil diimport';
+			  $this->redirect($this->url->link('laporan/importkomisisales', 'token=' . $this->session->data['token'], 'SSL'));
+		}
+	}
+
+	public function fee_customer_list() {
+		$this->load->model('import/komisisales');
+		$this->document->setTitle('Daftar Fee Customer');
+
+		if (isset($this->request->get['filter_date_start'])) {
+			$filter_date_start = $this->request->get['filter_date_start'];
+		} else {
+			$filter_date_start = date('Y-m-01');
+		}
+
+		if (isset($this->request->get['filter_date_end'])) {
+			$filter_date_end = $this->request->get['filter_date_end'];
+		} else {
+			$filter_date_end = date('Y-m-t');
+		}
+
+		$filter_data = array(
+			'filter_date_start' => $filter_date_start,
+			'filter_date_end'   => $filter_date_end
+		);
+
+		$this->data['fee_customers'] = $this->model_import_komisisales->getFeeCustomers($filter_data);
+		
+		$this->data['filter_date_start'] = $filter_date_start;
+		$this->data['filter_date_end'] = $filter_date_end;
+		$this->data['token'] = $this->session->data['token'];
+
+		$this->template = 'laporan/feecustomer_list.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+
+		$this->response->setOutput($this->render());
+	}
 }
 ?>
