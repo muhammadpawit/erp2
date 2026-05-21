@@ -107,7 +107,7 @@ class ModelGudangProduct extends Model {
 				FROM product_gudang pg
 				LEFT JOIN product p ON p.product_id = pg.product_id
 				LEFT JOIN gudang g ON g.gudang_id = pg.gudang_id
-				JOIN harga_terendah_new h ON (LOWER(h.nama) = LOWER(p.name) AND h.gudang = pg.gudang_id::text)
+				JOIN harga_terendah_new h ON (LOWER(h.nama) = LOWER(p.name) AND h.gudang::text = pg.gudang_id::text)
 				$url_where
 				ORDER BY pg.product_id, pg.gudang_id, h.tgl_berlaku DESC";
 
