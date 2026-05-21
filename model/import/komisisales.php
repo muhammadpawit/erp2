@@ -47,7 +47,7 @@ class ModelImportKomisiSales extends Model {
   public function gethargaterendah($tglso,$gudang,$kodebarang){
       $harga=0;
       if(!empty($gudang)){
-        $sql="SELECT harga_terendah FROM harga_terendah_new WHERE gudang='$gudang' and DATE(tgl_berlaku)<='$tglso' AND kodebarang='$kodebarang'";
+        $sql="SELECT harga_terendah FROM harga_terendah_new WHERE hapus=0 and gudang='$gudang' and DATE(tgl_berlaku)<='$tglso' AND kodebarang='$kodebarang'";
         $sql.=" ORDER BY tgl_berlaku DESC LIMIT 1 ";
         $d=$this->db->query($sql);
         $n=$d->row;
