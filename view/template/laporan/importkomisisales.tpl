@@ -313,6 +313,7 @@
                       <th>Nama Sales</th>
                       <th>Kode Customer</th>
                       <th>Nama Customer</th>
+                      <th>Gudang</th>
                       <th>Nama Barang</th>
                       <th>QTY</th>
                       <th>Poin Penjualan</th>
@@ -414,6 +415,9 @@
                       <td>
                         <?php echo $p['namacustomer']?>
                       </td>
+                      <td>
+                        <?php echo isset($p['namagudang']) ? $p['namagudang'] : ''?>
+                      </td>
                       <td>-</td>
                       <td>
                         <?php echo $tqty?>
@@ -479,6 +483,7 @@
                       <td>
                         <?php echo $pr['namacustomer']?>
                       </td>
+                      <td></td>
                       <td>
                         <?php echo $pr['namabarang']?>
                       </td>
@@ -880,19 +885,23 @@
       var jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false});
 
       var html = '<table class="table table-condensed table-bordered excel-preview-table">';
-      jsonData.forEach(function(row, i) {
-        html += '<tr>';
-        row.forEach(function(cell) {
-          var cellValue = cell ? cell : '';
-          if (i === 0) {
-            html += '<th>' + cellValue + '</th>';
-          } else {
-            html += '<td>' + cellValue + '</td>';
+      if (jsonData.length > 0) {
+        var numCols = jsonData[0].length;
+        jsonData.forEach(function(row, i) {
+          if (!row || row.length === 0) return;
+          html += '<tr>';
+          for (var j = 0; j < numCols; j++) {
+            var cellValue = (row[j] !== undefined && row[j] !== null) ? row[j] : '';
+            if (i === 0) {
+              html += '<th>' + cellValue + '</th>';
+            } else {
+              html += '<td>' + cellValue + '</td>';
+            }
           }
+          html += '</tr>';
+          if (i >= 100) return false;
         });
-        html += '</tr>';
-        if (i >= 100) return false;
-      });
+      }
       html += '</table>';
       if (jsonData.length > 100) {
         html += '<p class="text-muted small">* Menampilkan 100 baris pertama...</p>';

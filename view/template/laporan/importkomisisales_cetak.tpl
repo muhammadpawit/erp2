@@ -13,6 +13,7 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                           <th>Nama Sales</th>
                           <th>Kode Customer</th>
                           <th>Nama Customer</th>
+                          <th>Gudang</th>
                           <th>Nama Barang</th>
                           <th>QTY</th>
                           <th>Poin Penjualan</th>
@@ -121,6 +122,7 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                               <td>-</td>
                               <td><?php echo $p['kodecustomer']?></td>
                               <td><?php echo $p['namacustomer']?></td>
+                              <td><?php echo isset($p['namagudang']) ? $p['namagudang'] : ''?></td>
                               <td>-</td>
                               <td><?php echo $tqty?></td>
                               <td><?php echo $tpoin?></td>
@@ -148,6 +150,7 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                                 <td><?php echo $pr['namasales']?></td>
                                 <td><?php echo $pr['kodecustomer']?></td>
                                 <td><?php echo $pr['namacustomer']?></td>
+                                <td></td>
                                 <td><?php echo $pr['namabarang']?></td>
                                 <td><?php echo $pr['qty']?></td>
                                 <td><?php echo $pr['poin']*$pr['qty']?></td>
@@ -205,6 +208,7 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                           </tr>                     
                         <?php } ?>
                           <tr>
+                            <td></td>
                             <td></td>
                             <td></td>
                             <td></td>

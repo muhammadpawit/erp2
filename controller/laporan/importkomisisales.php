@@ -2055,6 +2055,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 				'customerbaru'=>$get['customerbaru'],
 				'kota'=>$get['kota'],
 				'provinsi'=>$get['provinsi'],
+				'namagudang' => isset($im['namagudang']) ? $im['namagudang'] : '',
 			);	
 		}
 	
@@ -2438,6 +2439,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 				'products'=>$res,
 				'customerbaru'=>$im['customerbaru'],
 				'fee_customer' => $this->currency->format($fee_customer_total),
+				'namagudang' => isset($im['namagudang']) ? $im['namagudang'] : '',
 			);	
 		}
 		

@@ -238,26 +238,26 @@ class ModelImportKomisiSales extends Model {
   }
 
   public function GetImportGroup($data){    
-    $sql="SELECT nomorinvoice, tglinvoice, tgllunas, kodecustomer, namacustomer, customerbaru, pengiriman, gudang_id, kota, provinsi, 
-          SUM(hargasatuan * qty) as total_ivs 
-          FROM inv_komisi_sales 
-          WHERE id>0 AND hapus=0 ";
+    $sql="SELECT i.nomorinvoice, i.tglinvoice, i.tgllunas, i.kodecustomer, i.namacustomer, i.customerbaru, i.pengiriman, i.gudang_id, g.nama as namagudang, i.kota, i.provinsi, 
+          SUM(i.hargasatuan * i.qty) as total_ivs 
+          FROM inv_komisi_sales i LEFT JOIN gudang g ON g.gudang_id = i.gudang_id 
+          WHERE i.id>0 AND i.hapus=0 ";
           
     if(!empty($data['tanggal'])){
-      $sql.=" AND DATE(tglinvoice) BETWEEN '".$data['tanggal']."' AND '".$data['tanggal2']."' ";
+      $sql.=" AND DATE(i.tglinvoice) BETWEEN '".$data['tanggal']."' AND '".$data['tanggal2']."' ";
     }
     if(!empty($data['filter_sales'])){
-      $sql .= " AND sales_id='" . $this->db->escape($data['filter_sales']) . "'";
+      $sql .= " AND i.sales_id='" . $this->db->escape($data['filter_sales']) . "'";
     }
     if(!empty($data['filter_status'])){
-      $sql .= " AND status='" . $this->db->escape($data['filter_status']) . "'";
+      $sql .= " AND i.status='" . $this->db->escape($data['filter_status']) . "'";
     }
     if(!empty($data['filter_gudang_id'])){
-      $sql .= " AND gudang_id='" . $this->db->escape($data['filter_gudang_id']) . "'";
+      $sql .= " AND i.gudang_id='" . $this->db->escape($data['filter_gudang_id']) . "'";
     }
 
-    $sql.=" GROUP BY nomorinvoice, tglinvoice, tgllunas, kodecustomer, namacustomer, customerbaru, pengiriman, gudang_id, kota, provinsi";
-    $sql.=" ORDER BY tglinvoice ASC";
+    $sql.=" GROUP BY i.nomorinvoice, i.tglinvoice, i.tgllunas, i.kodecustomer, i.namacustomer, i.customerbaru, i.pengiriman, i.gudang_id, g.nama, i.kota, i.provinsi";
+    $sql.=" ORDER BY i.tglinvoice ASC";
     
     if (isset($data['start']) || isset($data['limit'])) {
       if ($data['start'] < 0) { $data['start'] = 0; }
