@@ -370,15 +370,24 @@
                                     $mp_hari_temp = (int)$matches[0];
                                   }
 
-                                  $h_bunga = $h;
+                                  // Rumus Biaya Bunga Kredit
                                   if ($prd['status'] != 1 && $mp_hari_temp > 60) {
-                                      $h_bunga = $mp_hari_temp;
-                                  }
-
-                                  if($h_bunga>0){
-                                    $biayabungakredit = round($th*0.025/30*$h_bunga);
-                                  }else{
-                                    $biayabungakredit=0;
+                                      // 1. Bila metode pembayaran > 60 hari dan belum lunas
+                                      $biayabungakredit = round($th * $mp_hari_temp * (0.025 / 30));
+                                  } elseif ($prd['status'] != 1 && $mp_hari_temp <= 60) {
+                                      // 2. Bila metode pembayaran < 60 hari dan belum lunas maka ambil kolom lama bayar
+                                      if ($h > 0) {
+                                          $biayabungakredit = round($th * $h * (0.025 / 30));
+                                      } else {
+                                          $biayabungakredit = 0;
+                                      }
+                                  } else {
+                                      // Lunas (rumus sebelumnya)
+                                      if ($h > 0) {
+                                          $biayabungakredit = round($th * $h * (0.025 / 30));
+                                      } else {
+                                          $biayabungakredit = 0;
+                                      }
                                   }
 
                                   $bersih=($p['total']-$th)-$p['bkirim']-$biayabungakredit;
@@ -526,7 +535,7 @@
 
                                     echo $val;
                                     if ($mp_ori != '') {
-                                      echo '<br><small class="text-muted" style="color: #999;">(' . $mp_ori . ')</small>';
+                                      //echo '<br><small class="text-muted" style="color: #999;">(' . $mp_ori . ')</small>';
                                     }
                                   ?>
                       </td>
