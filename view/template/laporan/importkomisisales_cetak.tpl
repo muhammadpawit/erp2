@@ -23,6 +23,7 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
           <th>Total Profit Margin Kotor</th>
           <th>Biaya Transport</th>
           <th>Biaya Bunga Kredit</th>
+          <th>Fee Customer</th>
           <th>Invoice</th>
           <th>Metode Pembayaran</th>
           <th>Lama Bayar (Hari)</th>
@@ -165,6 +166,9 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
           <td>
             <?php echo ($biayabungakredit);?>
           </td>
+          <td>
+            <?php echo $p['fee_customer'];?>
+          </td>
           <td></td>
           <td></td>
           <td>
@@ -231,6 +235,7 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
             <?php //echo $pr['biayatransport'] ?>
           </td>
           <td>0</td>
+          <td></td>
           <td>
             <?php echo $pr['nomorinvoice']?>
           </td>
@@ -300,6 +305,7 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
           <td>
             <?php echo $allih ?>
           </td>
+          <td></td>
           <td></td>
           <td></td>
           <td></td>
