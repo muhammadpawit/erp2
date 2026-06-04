@@ -3340,18 +3340,121 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			$filter_date_end = date('Y-m-t');
 		}
 
+		$url = '';
+		if (isset($this->request->get['filter_date_start'])) {
+			$url .= '&filter_date_start=' . $this->request->get['filter_date_start'];
+		}
+		if (isset($this->request->get['filter_date_end'])) {
+			$url .= '&filter_date_end=' . $this->request->get['filter_date_end'];
+		}
+
 		$filter_data = array(
 			'filter_date_start' => $filter_date_start,
 			'filter_date_end'   => $filter_date_end
 		);
 
-		$this->data['fee_customers'] = $this->model_import_komisisales->getFeeCustomers($filter_data);
+		$results = $this->model_import_komisisales->getFeeCustomers($filter_data);
+		$this->data['fee_customers'] = array();
+		foreach ($results as $result) {
+			$result['edit'] = $this->url->link('laporan/importkomisisales/edit_fee_customer', 'token=' . $this->session->data['token'] . '&id=' . $result['id'] . $url, 'SSL');
+			$this->data['fee_customers'][] = $result;
+		}
+
+		$this->data['delete'] = $this->url->link('laporan/importkomisisales/delete_fee_customer', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		
+		if (isset($this->error['warning'])) {
+			$this->data['error_warning'] = $this->error['warning'];
+		} elseif (isset($this->session->data['error_warning'])) {
+			$this->data['error_warning'] = $this->session->data['error_warning'];
+			unset($this->session->data['error_warning']);
+		} else {
+			$this->data['error_warning'] = '';
+		}
+
+		if (isset($this->session->data['success'])) {
+			$this->data['success'] = $this->session->data['success'];
+			unset($this->session->data['success']);
+		} else {
+			$this->data['success'] = '';
+		}
+
+		if (isset($this->request->post['selected'])) {
+			$this->data['selected'] = (array)$this->request->post['selected'];
+		} else {
+			$this->data['selected'] = array();
+		}
 		
 		$this->data['filter_date_start'] = $filter_date_start;
 		$this->data['filter_date_end'] = $filter_date_end;
 		$this->data['token'] = $this->session->data['token'];
 
 		$this->template = 'laporan/feecustomer_list.tpl';
+		$this->children = array(
+			'common/header',
+			'common/footer'
+		);
+
+		$this->response->setOutput($this->render());
+	}
+
+	public function delete_fee_customer() {
+		$this->load->model('import/komisisales');
+		if (isset($this->request->post['selected']) && $this->validateDelete()) {
+			foreach ($this->request->post['selected'] as $id) {
+				$this->model_import_komisisales->deleteFeeCustomer($id);
+			}
+			$this->session->data['success'] = 'Data Fee Customer berhasil dihapus!';
+		}
+		
+		$url = '';
+		if (isset($this->request->get['filter_date_start'])) {
+			$url .= '&filter_date_start=' . $this->request->get['filter_date_start'];
+		}
+		if (isset($this->request->get['filter_date_end'])) {
+			$url .= '&filter_date_end=' . $this->request->get['filter_date_end'];
+		}
+		
+		$this->redirect($this->url->link('laporan/importkomisisales/fee_customer_list', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+	}
+
+	protected function validateDelete() {
+		return true; // add permissions if needed
+	}
+
+	public function edit_fee_customer() {
+		$this->load->model('import/komisisales');
+		$this->document->setTitle('Edit Fee Customer');
+
+		if (($this->request->server['REQUEST_METHOD'] == 'POST')) {
+			$update_data = $this->request->post;
+			$this->model_import_komisisales->editFeeCustomer($this->request->get['id'], $update_data);
+			$this->session->data['success'] = 'Data Fee Customer berhasil diupdate!';
+			
+			$url = '';
+			if (isset($this->request->get['filter_date_start'])) {
+				$url .= '&filter_date_start=' . $this->request->get['filter_date_start'];
+			}
+			if (isset($this->request->get['filter_date_end'])) {
+				$url .= '&filter_date_end=' . $this->request->get['filter_date_end'];
+			}
+			$this->redirect($this->url->link('laporan/importkomisisales/fee_customer_list', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+		}
+
+		$this->data['fee'] = $this->model_import_komisisales->getFeeCustomer($this->request->get['id']);
+		
+		$url = '';
+		if (isset($this->request->get['filter_date_start'])) {
+			$url .= '&filter_date_start=' . $this->request->get['filter_date_start'];
+		}
+		if (isset($this->request->get['filter_date_end'])) {
+			$url .= '&filter_date_end=' . $this->request->get['filter_date_end'];
+		}
+
+		$this->data['action'] = $this->url->link('laporan/importkomisisales/edit_fee_customer', 'token=' . $this->session->data['token'] . '&id=' . $this->request->get['id'] . $url, 'SSL');
+		$this->data['cancel'] = $this->url->link('laporan/importkomisisales/fee_customer_list', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		$this->data['token'] = $this->session->data['token'];
+
+		$this->template = 'laporan/feecustomer_form.tpl';
 		$this->children = array(
 			'common/header',
 			'common/footer'

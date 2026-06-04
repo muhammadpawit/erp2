@@ -533,5 +533,25 @@ class ModelImportKomisiSales extends Model {
     return (float)$query->row['total'];
   }
 
+  public function deleteFeeCustomer($id) {
+    $this->db->query("DELETE FROM fee_customer WHERE id = '" . (int)$id . "'");
+  }
+
+  public function getFeeCustomer($id) {
+    $query = $this->db->query("SELECT * FROM fee_customer WHERE id = '" . (int)$id . "'");
+    return $query->row;
+  }
+
+  public function editFeeCustomer($id, $data) {
+    $sql = "UPDATE fee_customer SET ";
+    $set = array();
+    foreach ($data as $key => $value) {
+      $set[] = $this->db->escape($key) . " = '" . $this->db->escape($value) . "'";
+    }
+    $sql .= implode(', ', $set);
+    $sql .= " WHERE id = '" . (int)$id . "'";
+    $this->db->query($sql);
+  }
+
 }
 ?>

@@ -14,6 +14,16 @@
             <h3 class="box-title">Data Fee Customer</h3>
           </div>
           <div class="box-body">
+            <?php if (isset($error_warning) && $error_warning) { ?>
+            <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_warning; ?>
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+            <?php } ?>
+            <?php if (isset($success) && $success) { ?>
+            <div class="alert alert-success"><i class="fa fa-check-circle"></i> <?php echo $success; ?>
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+            <?php } ?>
             <div class="row" style="margin-bottom: 20px;">
               <div class="col-md-3">
                 <div class="form-group">
@@ -27,17 +37,20 @@
                   <input type="text" name="filter_date_end" value="<?php echo $filter_date_end; ?>" class="form-control datepicker" />
                 </div>
               </div>
-              <div class="col-md-2">
+              <div class="col-md-6">
                 <div class="form-group">
                   <label>&nbsp;</label><br />
                   <button type="button" onclick="filter();" class="btn btn-primary"><i class="fa fa-filter"></i> Filter</button>
+                  <button type="button" onclick="if(confirm('Apakah Anda yakin ingin menghapus data yang dipilih?')) { $('#form-fee-customer').submit(); }" class="btn btn-danger"><i class="fa fa-trash"></i> Hapus Massal</button>
                 </div>
               </div>
             </div>
+            <form action="<?php echo $delete; ?>" method="post" enctype="multipart/form-data" id="form-fee-customer">
             <div class="table-responsive">
                 <table class="table table-bordered table-striped" id="feeCustomerTable">
                     <thead>
                       <tr>
+                          <th style="width: 1px;" class="text-center"><input type="checkbox" onclick="$('input[name*=\'selected\']').prop('checked', this.checked);" /></th>
                           <th>ID</th>
                           <th>Cabang</th>
                           <th>Pelanggan</th>
@@ -59,11 +72,19 @@
                           <th>Jatuh Tempo</th>
                           <th>Tgl Bayar</th>
                           <th>No TRX</th>
+                          <th>Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
                         <?php foreach($fee_customers as $f){?>
                           <tr>
+                              <td class="text-center">
+                                <?php if (in_array($f['id'], $selected)) { ?>
+                                <input type="checkbox" name="selected[]" value="<?php echo $f['id']; ?>" checked="checked" />
+                                <?php } else { ?>
+                                <input type="checkbox" name="selected[]" value="<?php echo $f['id']; ?>" />
+                                <?php } ?>
+                              </td>
                               <td><?php echo $f['id']?></td>
                               <td><?php echo $f['cabang']?></td>
                               <td><?php echo $f['pelanggan']?></td>
@@ -85,11 +106,15 @@
                               <td><?php echo $f['tgl_jatuh_tempo']?></td>
                               <td><?php echo $f['tgl_pembayaran_terakhir']?></td>
                               <td><?php echo $f['no_trx_pembayaran']?></td>
+                              <td>
+                                  <a href="<?php echo $f['edit']; ?>" data-toggle="tooltip" title="Edit" class="btn btn-primary"><i class="fa fa-pencil"></i></a>
+                              </td>
                           </tr>
                         <?php } ?>
                     </tbody>
                 </table>
             </div>
+            </form>
           </div>
         </div>
       </div>
@@ -102,8 +127,11 @@
 $(document).ready( function () {
     $('.datepicker').datepicker({dateFormat: 'yy-mm-dd'});
     $('#feeCustomerTable').DataTable({
-        "order": [[ 0, "desc" ]],
-        "pageLength": 25
+        "order": [[ 1, "desc" ]],
+        "pageLength": 25,
+        "columnDefs": [
+            { "orderable": false, "targets": [0, 22] }
+        ]
     });
 });
 
