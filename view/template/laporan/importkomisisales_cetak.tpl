@@ -249,7 +249,7 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                                       $val = '0';
                                     }
 
-                                    //echo $val . ($mp_ori != '' ? ' (' . $mp_ori . ')' : '');
+                                    echo $val;
                                   ?>
           </td>
           <td>0</td>

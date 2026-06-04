@@ -534,9 +534,6 @@
                                     }
 
                                     echo $val;
-                                    if ($mp_ori != '') {
-                                      //echo '<br><small class="text-muted" style="color: #999;">(' . $mp_ori . ')</small>';
-                                    }
                                   ?>
                       </td>
                       <td>0</td>
