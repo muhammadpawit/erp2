@@ -77,10 +77,10 @@ header("Content-Disposition: attachment; filename=".$namasales.".xls");
                                   }
 
                                   // Rumus Biaya Bunga Kredit
-                                  if ($prd['status'] != 1 && $mp_hari_temp > 60) {
-                                      // 1. Bila metode pembayaran > 60 hari dan belum lunas
+                                  if ($prd['status'] != 1 && $mp_hari_temp >= 60) {
+                                      // 1. Bila metode pembayaran >= 60 hari dan belum lunas
                                       $biayabungakredit = round($th * $mp_hari_temp * (0.025 / 30));
-                                  } elseif ($prd['status'] != 1 && $mp_hari_temp <= 60) {
+                                  } elseif ($prd['status'] != 1 && $mp_hari_temp < 60) {
                                       // 2. Bila metode pembayaran < 60 hari dan belum lunas maka ambil kolom lama bayar
                                       if ($h > 0) {
                                           $biayabungakredit = round($th * $h * (0.025 / 30));

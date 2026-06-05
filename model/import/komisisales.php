@@ -255,6 +255,9 @@ class ModelImportKomisiSales extends Model {
     if(!empty($data['filter_gudang_id'])){
       $sql .= " AND i.gudang_id='" . $this->db->escape($data['filter_gudang_id']) . "'";
     }
+    if(!empty($data['filter_invoice'])){
+      $sql .= " AND lower(i.nomorinvoice) LIKE '%" . $this->db->escape(strtolower($data['filter_invoice'])) . "%'";
+    }
 
     $sql.=" GROUP BY i.nomorinvoice, i.tglinvoice, i.tgllunas, i.kodecustomer, i.namacustomer, i.customerbaru, i.pengiriman, i.gudang_id, g.nama, i.kota, i.provinsi";
     $sql.=" ORDER BY i.tglinvoice ASC";
@@ -286,6 +289,9 @@ class ModelImportKomisiSales extends Model {
 
     if(!empty($data['filter_gudang_id'])){
       $sql .= " AND gudang_id='" . $this->db->escape(utf8_strtolower($data['filter_gudang_id'])) . "'";
+    }
+    if(!empty($data['filter_invoice'])){
+      $sql .= " AND lower(nomorinvoice) LIKE '%" . $this->db->escape(strtolower($data['filter_invoice'])) . "%'";
     }
 
     $sql.=" group by tglso,tglinvoice,tgllunas,nomorinvoice,namacustomer,pengiriman,gudang_id,customerbaru,kodecustomer ORDER BY tglso ASC";

@@ -1863,6 +1863,11 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		} else {
 			$filter_status = null;
 		}
+		if (isset($this->request->get['filter_invoice'])) {
+			$filter_invoice = $this->request->get['filter_invoice'];
+		} else {
+			$filter_invoice = null;
+		}
 		if (isset($this->request->get['filter_date_start'])) {
 			$filter_date_start = $this->request->get['filter_date_start'];
 		} else {
@@ -1953,6 +1958,9 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		if (isset($this->request->get['order'])) {
 			$url .= '&order=' . $this->request->get['order'];
 		}
+		if (isset($this->request->get['filter_invoice'])) {
+			$url .= '&filter_invoice=' . $this->request->get['filter_invoice'];
+		}
 
 		if (isset($this->request->get['filter_jenisorder'])) {
 			$url .= '&filter_jenisorder=' . $this->request->get['filter_jenisorder'];
@@ -1984,6 +1992,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			'filter_sales'=>$filter_sales,
 			'filter_status'=>$filter_status,
 			'filter_gudang_id'=>$filter_gudang_id,
+			'filter_invoice'=>$filter_invoice,
 			//'start'           => ($page - 1) * $this->config->get('config_admin_limit'),
 			//'limit'           => $this->config->get('config_admin_limit')
 		);
@@ -2218,6 +2227,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		$this->data['filter_date_start']	= $filter_date_start;
 		$this->data['filter_date_end']	= $filter_date_end;
 		$this->data['filter_status']	= $filter_status;
+		$this->data['filter_invoice']	= $filter_invoice;
 		$this->data['filter_gudang_id']	= $filter_gudang_id;
 		$this->data['token'] = $this->session->data['token'];
 		$this->data['exporttoexcel'] = $this->url->link('laporan/komisisales', '&print=1&token=' . $this->session->data['token'] . $url, 'SSL');
@@ -2261,6 +2271,11 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			$filter_status = $this->request->get['filter_status'];
 		} else {
 			$filter_status = null;
+		}
+		if (isset($this->request->get['filter_invoice'])) {
+			$filter_invoice = $this->request->get['filter_invoice'];
+		} else {
+			$filter_invoice = null;
 		}
 		if (isset($this->request->get['filter_date_start'])) {
 			$filter_date_start = $this->request->get['filter_date_start'];
@@ -2348,6 +2363,9 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		if (isset($this->request->get['order'])) {
 			$url .= '&order=' . $this->request->get['order'];
 		}
+		if (isset($this->request->get['filter_invoice'])) {
+			$url .= '&filter_invoice=' . $this->request->get['filter_invoice'];
+		}
 
 		if (isset($this->request->get['filter_jenisorder'])) {
 			$url .= '&filter_jenisorder=' . $this->request->get['filter_jenisorder'];
@@ -2381,6 +2399,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			'filter_sales'=>$filter_sales,
 			'filter_status'=>$filter_status,
 			'filter_gudang_id'=>$filter_gudang_id,
+			'filter_invoice'=>$filter_invoice,
 			'start'           => ($page - 1) * $this->config->get('config_admin_limit'),
 			'limit'           => $this->config->get('config_admin_limit')
 		);
@@ -2390,6 +2409,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			'filter_sales'=>$filter_sales,
 			'filter_status'=>$filter_status,
 			'filter_gudang_id'=>$filter_gudang_id,
+			'filter_invoice'=>$filter_invoice,
 			//'start'           => ($page - 1) * $this->config->get('config_admin_limit'),
 			//'limit'           => $this->config->get('config_admin_limit')
 		);
@@ -2604,6 +2624,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 		$this->data['filter_date_start']	= $filter_date_start;
 		$this->data['filter_date_end']	= $filter_date_end;
 		$this->data['filter_status']	= $filter_status;
+		$this->data['filter_invoice']	= $filter_invoice;
 		$this->data['filter_gudang_id']	= $filter_gudang_id;
 		$this->data['filter_sales']	= $filter_sales;
 		$this->data['token'] = $this->session->data['token'];

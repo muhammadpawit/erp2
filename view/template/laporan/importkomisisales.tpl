@@ -235,7 +235,7 @@
                   </select>
                 </div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-2">
                 <div class="form-group">
                   <label>Nama Sales</label>
                   <select name="filter_sales" class="form-control select">
@@ -246,6 +246,13 @@
                     </option>
                     <?php } ?>
                   </select>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label>No Invoice</label>
+                  <input type="text" name="filter_invoice" value="<?php echo $filter_invoice; ?>"
+                    class="form-control" />
                 </div>
               </div>
               <div class="col-md-2">
@@ -371,13 +378,16 @@
                                   }
 
                                   // Rumus Biaya Bunga Kredit
-                                  if ($prd['status'] != 1 && $mp_hari_temp > 60) {
+                                  $rumus_bunga_kredit = '';
+                                  if ($prd['status'] != 1 && $mp_hari_temp >= 60) {
                                       // 1. Bila metode pembayaran > 60 hari dan belum lunas
                                       $biayabungakredit = round($th * $mp_hari_temp * (0.025 / 30));
-                                  } elseif ($prd['status'] != 1 && $mp_hari_temp <= 60) {
+                                      $rumus_bunga_kredit = "<br><small>({$th} x {$mp_hari_temp} x (0.025 / 30))</small>";
+                                  } elseif ($prd['status'] != 1 && $mp_hari_temp < 60) {
                                       // 2. Bila metode pembayaran < 60 hari dan belum lunas maka ambil kolom lama bayar
                                       if ($h > 0) {
                                           $biayabungakredit = round($th * $h * (0.025 / 30));
+                                          $rumus_bunga_kredit = "<br><small>({$th} x " . (int)$h . " x (0.025 / 30))</small>";
                                       } else {
                                           $biayabungakredit = 0;
                                       }
@@ -385,6 +395,7 @@
                                       // Lunas (rumus sebelumnya)
                                       if ($h > 0) {
                                           $biayabungakredit = round($th * $h * (0.025 / 30));
+                                          $rumus_bunga_kredit = "<br><small>({$th} x " . (int)$h . " x (0.025 / 30))</small>";
                                       } else {
                                           $biayabungakredit = 0;
                                       }
@@ -449,6 +460,7 @@
                       </td>
                       <td>
                         <?php echo $this->currency->format($biayabungakredit);?>
+                        <?php echo $rumus_bunga_kredit;?>
                       </td>
                       <td>
                         <?php echo $p['fee_customer'];?>
@@ -685,6 +697,12 @@
       url += '&filter_status=' + encodeURIComponent(filter_status);
     }
 
+    var filter_invoice = $('input[name=\'filter_invoice\']').val();
+
+    if (filter_invoice) {
+      url += '&filter_invoice=' + encodeURIComponent(filter_invoice);
+    }
+
     location = url;
   }
 
@@ -728,6 +746,12 @@
 
     //alert(JSON.stringify(filter_statuss));
     url += '&filter_status=' + filter_statuss;
+
+    var filter_invoice = $('input[name=\'filter_invoice\']').val();
+
+    if (filter_invoice) {
+      url += '&filter_invoice=' + encodeURIComponent(filter_invoice);
+    }
 
     /*var filter_shipping_method = $('select[name=\'filter_shipping_method\']').val();
 
