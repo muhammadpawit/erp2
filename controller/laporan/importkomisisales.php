@@ -2030,6 +2030,8 @@ class ControllerLaporanImportKomisiSales extends Controller {
 			}
 
 
+			$fee_customer_total = $this->model_import_komisisales->sumFeeCustomer($im['nomorinvoice']);
+
 			$this->data['penjualans'][]=array(
 				'product_id'=>0,
 				'tglinvoice'=>$get['tglinvoice'],
@@ -2053,6 +2055,7 @@ class ControllerLaporanImportKomisiSales extends Controller {
 				'bkirim'=>$biayatransport,
 				'products'=>$res,
 				'customerbaru'=>$get['customerbaru'],
+				'fee_customer' => $this->currency->format($fee_customer_total),
 				'kota'=>$get['kota'],
 				'provinsi'=>$get['provinsi'],
 				'namagudang' => isset($im['namagudang']) ? $im['namagudang'] : '',
